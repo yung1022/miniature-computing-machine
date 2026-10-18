@@ -17,7 +17,7 @@ jobs:
         env:
           API_URL: "https://api-prox.tnstats.dev/web/post/UCjrii0S-8k6sfc_ds3V-mRg"
           AUTH_HEADER: "Bearer ${{ secrets.API_TOKEN }}"
-          REQUEST_BODY: '{"type":"ad","gain":34567}'
+          REQUEST_BODY: '{"type":"music video","gain":520000}'
           DURATION_MINUTES: ${{ inputs.duration_minutes }}
         run: |
           echo "Starting POST requests to $API_URL every 6.2 seconds..."
