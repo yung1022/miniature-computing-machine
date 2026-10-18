@@ -1,0 +1,44 @@
+name: Periodic POST Request
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration_minutes:
+        description: 'How many minutes should this run? (Max ~360 for GitHub limits)'
+        required: true
+        default: '5'
+        type: string
+
+jobs:
+  send-requests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute POST requests at 6.2s intervals
+        env:
+          API_URL: "https://api-prox.tnstats.dev/web/post/UCjrii0S-8k6sfc_ds3V-mRg"
+          AUTH_HEADER: "Bearer ${{ secrets.API_TOKEN }}"
+          REQUEST_BODY: '{"type":"ad","gain":34567}'
+          DURATION_MINUTES: ${{ inputs.duration_minutes }}
+        run: |
+          echo "Starting POST requests to $API_URL every 6.2 seconds..."
+          
+          # Calculate the end time based on user input
+          end_time=$(( $(date +%s) + (DURATION_MINUTES * 60) ))
+          
+          while [ $(date +%s) -lt $end_time ]; do
+            # Send POST request using curl
+            response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$API_URL" \
+              -H "Authorization: $AUTH_HEADER" \
+              -H "Content-Type: application/json" \
+              -d "$REQUEST_BODY")
+            
+            http_status=$(echo "$response" | grep "HTTP_STATUS" | cut -d: -f2)
+            body=$(echo "$response" | sed '/HTTP_STATUS/d')
+            
+            echo "[$(date -u +'%Y-%m-%d %H:%M:%S UTC')] Request sent | Status: $http_status | Response: $body"
+            
+            # Wait 6.2 seconds before the next request
+            sleep 6.2
+          done
+          
+          echo "Finished running scheduled POST requests."
