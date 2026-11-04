@@ -7,6 +7,10 @@ on:
         description: "URL to open before evaluating script.js"
         required: false
         default: "https://grinding.tnstats.dev/"
+      local_storage_json:
+        description: "JSON object of localStorage key/value pairs to set before script.js runs. Example: {\"theme\":\"dark\",\"settings\":{\"sound\":true}}"
+        required: false
+        default: "{}"
 
 jobs:
   run-script:
@@ -31,4 +35,5 @@ jobs:
       - name: Visit page and run script.js
         env:
           TARGET_URL: ${{ inputs.target_url }}
+          LOCAL_STORAGE_JSON: ${{ inputs.local_storage_json }}
         run: npm run run
