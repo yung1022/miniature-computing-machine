@@ -5,27 +5,53 @@ const { chromium } = require("playwright");
 const DEFAULT_TARGET_URL = "https://grinding.tnstats.dev/";
 const DEFAULT_NAVIGATION_TIMEOUT_MS = 60_000;
 const HEARTBEAT_MS = 60_000;
+const SCRIPT_FILES = ["script.js", "script2.js"];
 
-async function readScriptSource() {
-  const scriptPath = path.join(__dirname, "script.js");
-  return fs.readFile(scriptPath, "utf8");
+async function readScripts() {
+  return Promise.all(
+    SCRIPT_FILES.map(async (filename) => ({
+      filename,
+      source: await fs.readFile(path.join(__dirname, filename), "utf8")
+    }))
+  );
 }
 
 function getTargetUrl() {
-  const rawValue = process.env.TARGET_URL || DEFAULT_TARGET_URL;
-  return new URL(rawValue).toString();
+  const url = new URL(process.env.TARGET_URL || DEFAULT_TARGET_URL);
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new Error("TARGET_URL must use http or https.");
+  }
+  return url.toString();
+}
+
+function getLocalStorageData() {
+  let parsed;
+  try {
+    parsed = JSON.parse(process.env.LOCAL_STORAGE_JSON || "{}");
+  } catch (error) {
+    throw new Error(`LOCAL_STORAGE_JSON must be valid JSON: ${error.message}`);
+  }
+
+  if (parsed === null || Array.isArray(parsed) || typeof parsed !== "object") {
+    throw new Error("LOCAL_STORAGE_JSON must be a JSON object of key/value pairs.");
+  }
+
+  return Object.fromEntries(
+    Object.entries(parsed).map(([key, value]) => [
+      key,
+      typeof value === "string" ? value : JSON.stringify(value)
+    ])
+  );
 }
 
 async function main() {
   const targetUrl = getTargetUrl();
-  const scriptSource = await readScriptSource();
+  const scripts = await readScripts();
+  const localStorageData = getLocalStorageData();
 
   console.log(`Launching Chromium for ${targetUrl}`);
 
-  const browser = await chromium.launch({
-    headless: true
-  });
-
+  const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
   const page = await context.newPage();
 
@@ -38,35 +64,40 @@ async function main() {
   });
 
   page.setDefaultNavigationTimeout(DEFAULT_NAVIGATION_TIMEOUT_MS);
-  await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
 
-  console.log("Page loaded. Evaluating script.js in the page context.");
-
-  await page.evaluate((source) => {
-    window.eval(`${source}\n//# sourceURL=repo-script.js`);
-  }, scriptSource);
-
-  console.log("script.js evaluated. Keeping the workflow alive.");
-
-  process.on("SIGTERM", async () => {
-    console.log("Received SIGTERM. Closing browser.");
-    await browser.close();
-    process.exit(0);
-  });
-
-  process.on("SIGINT", async () => {
-    console.log("Received SIGINT. Closing browser.");
-    await browser.close();
-    process.exit(0);
-  });
-
-  setInterval(async () => {
-    try {
-      const currentUrl = page.url();
-      console.log(`Heartbeat: browser still running on ${currentUrl}`);
-    } catch (error) {
-      console.error("Heartbeat failed:", error);
+  // Initialize localStorage for the target origin before the site loads.
+  await page.addInitScript((storage) => {
+    for (const [key, value] of Object.entries(storage)) {
+      window.localStorage.setItem(key, value);
     }
+  }, localStorageData);
+
+  await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
+  console.log("Page loaded. Evaluating both scripts in the same page.");
+
+  for (const { filename, source } of scripts) {
+    console.log(`Evaluating ${filename}.`);
+    await page.evaluate(({ source, filename }) => {
+      window.eval(`${source}\n//# sourceURL=${filename}`);
+    }, { source, filename });
+  }
+
+  console.log("Both scripts evaluated. Keeping the workflow alive.");
+
+  let shuttingDown = false;
+  const shutdown = async (signal) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`Received ${signal}. Closing browser.`);
+    await browser.close();
+    process.exit(0);
+  };
+
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
+
+  setInterval(() => {
+    console.log(`Heartbeat: browser still running on ${page.url()}`);
   }, HEARTBEAT_MS);
 
   await new Promise(() => {});
