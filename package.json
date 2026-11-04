@@ -1,0 +1,12 @@
+{
+  "name": "visit-and-run-script",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GitHub Actions workflow that opens a page and runs script.js in the browser page context.",
+  "scripts": {
+    "run": "node runner.js"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}
