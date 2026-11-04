@@ -1,0 +1,34 @@
+name: Visit Link And Run Script
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "URL to open before evaluating script.js"
+        required: false
+        default: "https://grinding.tnstats.dev/"
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Visit page and run script.js
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+        run: npm run run
