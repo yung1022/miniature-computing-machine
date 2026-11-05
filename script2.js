@@ -1,6 +1,6 @@
 (() => {
   const START_DELAY_MS = 300;
-  const INTERVAL_MS = 6100;
+  const INTERVAL_MS = 6075;
 
   function tryFromWindow() {
     if (window.CONTENT_COMMANDS && Array.isArray(window.CONTENT_COMMANDS)) {
