@@ -6,7 +6,7 @@ const DEFAULT_TARGET_URL = "https://grinding.tnstats.dev/";
 const DEFAULT_NAVIGATION_TIMEOUT_MS = 60_000;
 const HEARTBEAT_MS = 60_000;
 // End gracefully before the workflow's 360-minute hard timeout.
-const GRACEFUL_RUNTIME_MS = 350 * 60 * 1000;
+const GRACEFUL_RUNTIME_MS = 359.9 * 60 * 1000;
 const SCRIPT_FILES = ["script.js", "script2.js"];
 
 async function readScripts() {
