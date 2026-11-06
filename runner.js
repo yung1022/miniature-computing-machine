@@ -5,7 +5,7 @@ const { chromium } = require("playwright");
 const DEFAULT_TARGET_URL = "https://grinding.tnstats.dev/";
 const DEFAULT_NAVIGATION_TIMEOUT_MS = 60_000;
 const HEARTBEAT_MS = 60_000;
-const SCRIPT_FILES = ["script.js", "script2.js", "script3.js"];
+const SCRIPT_FILES = ["script.js", "script2.js"];
 
 async function readScripts() {
   return Promise.all(
