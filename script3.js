@@ -3,9 +3,8 @@
   const INTERVAL_MS = 303750;
 
   function tryFromWindow() {
-    if (window.CONTENT_COMMANDS && Array.isArray(window.CONTENT_COMMANDS)) {
-      const item = window.CONTENT_COMMANDS[23]; // Selects item 23
-      return item ? [item] : [];
+    if (window.BOOST_COMMAND && typeof window.BOOST_COMMAND === 'object' && !Array.isArray(window.BOOST_COMMAND)) {
+      return [window.BOOST_COMMAND];
     }
     return [];
   }
@@ -23,9 +22,8 @@
 
   function getFromScripts() {
     const scriptsText = Array.from(document.scripts).map(s => s.textContent || '').join('\n');
-    const content = extractConst('CONTENT_COMMANDS', scriptsText) || [];
-    const item = content[20]; // Selects item 23 from parsed script text
-    return item ? [item] : [];
+    const boost = extractConst('BOOST_COMMAND', scriptsText);
+    return (boost && typeof boost === 'object' && !Array.isArray(boost)) ? [boost] : [];
   }
 
   function buildList() {
@@ -38,7 +36,7 @@
 
   const commands = buildList();
   if (!commands.length) {
-    console.error('No commands found or item 23 does not exist — run this after the page has fully loaded.');
+    console.error('No BOOST_COMMAND found — run this after the page has fully loaded.');
     return;
   }
 
@@ -79,7 +77,7 @@
       }
       idx++;
     }, INTERVAL_MS);
-    console.log('Auto-grind started for item 23. Command:', commands.map(c => c.type).join(', '));
+    console.log('Auto-grind started for BOOST_COMMAND. Command:', commands.map(c => c.type).join(', '));
   }, START_DELAY_MS);
 
   window.stopAutoGrind = () => {
@@ -97,9 +95,3 @@
     }
   };
 })();
-
-console.log("script2.js started on", window.location.href);
-
-setInterval(() => {
-  console.log("script2.js heartbeat", new Date().toISOString());
-}, 10000);
