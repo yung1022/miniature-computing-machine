@@ -5,6 +5,8 @@ const { chromium } = require("playwright");
 const DEFAULT_TARGET_URL = "https://grinding.tnstats.dev/";
 const DEFAULT_NAVIGATION_TIMEOUT_MS = 60_000;
 const HEARTBEAT_MS = 60_000;
+// End gracefully before the workflow's 360-minute hard timeout.
+const GRACEFUL_RUNTIME_MS = 350 * 60 * 1000;
 const SCRIPT_FILES = ["script.js", "script2.js"];
 
 async function readScripts() {
@@ -73,7 +75,7 @@ async function main() {
   }, localStorageData);
 
   await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
-  console.log("Page loaded. Evaluating both scripts in the same page.");
+  console.log("Page loaded. Evaluating scripts in the same page.");
 
   for (const { filename, source } of scripts) {
     console.log(`Evaluating ${filename}.`);
@@ -82,23 +84,39 @@ async function main() {
     }, { source, filename });
   }
 
-  console.log("Both scripts evaluated. Keeping the workflow alive.");
+  console.log("Scripts evaluated. Keeping the workflow alive.");
 
   let shuttingDown = false;
-  const shutdown = async (signal) => {
+  let heartbeatTimer;
+  let runtimeTimer;
+
+  const shutdown = async (reason) => {
     if (shuttingDown) return;
     shuttingDown = true;
-    console.log(`Received ${signal}. Closing browser.`);
-    await browser.close();
+    console.log(`${reason}. Closing browser and exiting successfully.`);
+
+    clearInterval(heartbeatTimer);
+    clearTimeout(runtimeTimer);
+
+    try {
+      await browser.close();
+    } catch (error) {
+      console.error("Error while closing browser:", error);
+    }
+
     process.exit(0);
   };
 
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
-  process.on("SIGINT", () => shutdown("SIGINT"));
+  process.on("SIGTERM", () => shutdown("Received SIGTERM"));
+  process.on("SIGINT", () => shutdown("Received SIGINT"));
 
-  setInterval(() => {
+  heartbeatTimer = setInterval(() => {
     console.log(`Heartbeat: browser still running on ${page.url()}`);
   }, HEARTBEAT_MS);
+
+  runtimeTimer = setTimeout(() => {
+    shutdown("Reached planned 350-minute runtime");
+  }, GRACEFUL_RUNTIME_MS);
 
   await new Promise(() => {});
 }
