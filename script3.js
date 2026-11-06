@@ -95,3 +95,9 @@
     }
   };
 })();
+
+console.log("script2.js started on", window.location.href);
+
+setInterval(() => {
+  console.log("script2.js heartbeat", new Date().toISOString());
+}, 10000);
