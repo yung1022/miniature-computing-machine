@@ -109,9 +109,9 @@
 
     function normalizeChannel(item) {
       if (!item || typeof item !== "object") return null;
-      const id = firstValue(item, ["channelId", "channel_id", "channelID", "id"]);
-      const name = firstValue(item, ["channelName", "channel_name", "name", "title", "channel"]);
-      const subscribers = firstValue(item, ["subscribers", "subscriberCount", "subscriber_count", "subscribers_count", "count"]);
+      const id = firstValue(item, ["cid", "channelId", "channel_id", "channelID", "id"]);
+      const name = firstValue(item, ["cname", "channelName", "channel_name", "name", "title", "channel"]);
+      const subscribers = firstValue(item, ["subscriberCountRealAPI", "subscribers", "subscriberCount", "subscriber_count", "subscribers_count", "count"]);
       if (id === undefined) return null;
       return {
         id: String(id),
