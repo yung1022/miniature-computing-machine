@@ -62,7 +62,7 @@
       <div id="status" class="status" role="status">Loading channel statistics…</div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Channel</th><th>Channel ID</th><th>Subscribers</th></tr></thead>
+          <thead><tr><th>Channel</th><th>Channel ID</th><th>Subscribers (rank)</th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
         <div id="empty" class="empty" hidden>No matching channels found.</div>
@@ -150,9 +150,9 @@
           .filter((channel) => allowed.size === 0 || allowed.has(channel.id));
 
         rows.replaceChildren();
-        for (const channel of channels) {
+        for (const [index, channel] of channels.entries()) {
           const tr = document.createElement("tr");
-          for (const text of [channel.name, channel.id, formatCount(channel.subscribers)]) {
+          for (const text of [channel.name, channel.id, `${formatCount(channel.subscribers)} (#${index + 1})`]) {
             const td = document.createElement("td");
             td.textContent = text;
             tr.appendChild(td);
