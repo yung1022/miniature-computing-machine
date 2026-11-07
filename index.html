@@ -144,15 +144,17 @@
         const [payload, config] = await Promise.all([dataResponse.json(), configResponse.json()]);
         const configuredIds = Array.isArray(config.channelIds) ? config.channelIds.map(String) : [];
         const allowed = new Set(configuredIds);
-        const channels = extractChannels(payload)
+        const rankedChannels = extractChannels(payload)
           .map(normalizeChannel)
           .filter(Boolean)
-          .filter((channel) => allowed.size === 0 || allowed.has(channel.id));
+          .map((channel, index) => ({ channel, rank: index + 1 }));
+        const channels = rankedChannels
+          .filter(({ channel }) => allowed.size === 0 || allowed.has(channel.id));
 
         rows.replaceChildren();
-        for (const [index, channel] of channels.entries()) {
+        for (const { channel, rank } of channels) {
           const tr = document.createElement("tr");
-          for (const text of [channel.name, channel.id, `${formatCount(channel.subscribers)} (#${index + 1})`]) {
+          for (const text of [channel.name, channel.id, `${formatCount(channel.subscribers)} (#${rank})`]) {
             const td = document.createElement("td");
             td.textContent = text;
             tr.appendChild(td);
