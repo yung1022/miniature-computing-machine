@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Actions Runner Control</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0f172a;
+        --panel: #111827;
+        --panel-alt: #1f2937;
+        --border: #374151;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --accent: #60a5fa;
+        --accent-strong: #2563eb;
+        --success: #22c55e;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: linear-gradient(180deg, #020817 0%, #111827 100%);
+        color: var(--text);
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 32px 18px 48px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(2rem, 4vw, 3rem);
+      }
+      .subtitle {
+        color: var(--muted);
+        margin-bottom: 24px;
+      }
+      .warning {
+        background: rgba(245, 158, 11, 0.18);
+        border: 1px solid rgba(245, 158, 11, 0.5);
+        border-radius: 12px;
+        padding: 14px 16px;
+        color: #fef3c7;
+        margin-bottom: 22px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 18px;
+      }
+      .card {
+        background: rgba(17, 24, 39, 0.9);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 18px;
+      }
+      label {
+        display: block;
+        margin: 0 0 8px;
+        font-weight: 600;
+      }
+      input, textarea, button {
+        font: inherit;
+      }
+      input, textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.9);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+      textarea {
+        min-height: 140px;
+        resize: vertical;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      button {
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .primary {
+        background: var(--accent-strong);
+        color: white;
+      }
+      .secondary {
+        background: #374151;
+        color: var(--text);
+      }
+      .danger {
+        background: rgba(239, 68, 68, 0.18);
+        color: #fecaca;
+        border: 1px solid rgba(239, 68, 68, 0.5);
+      }
+      .status {
+        margin-top: 18px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: rgba(31, 41, 55, 0.9);
+        color: var(--muted);
+        min-height: 56px;
+      }
+      .status.success { color: #bbf7d0; border-color: rgba(34, 197, 94, 0.4); }
+      .status.error { color: #fecaca; border-color: rgba(239, 68, 68, 0.5); }
+      code {
+        background: rgba(148, 163, 184, 0.12);
+        padding: 0.1rem 0.35rem;
+        border-radius: 6px;
+      }
+      .small {
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>GitHub Actions Runner Control</h1>
+      <p class="subtitle">Safe configuration page for the workflow in this repository. This page prepares run inputs for the action; it does not remotely control arbitrary browsers.</p>
+
+      <div class="warning">
+        This is a self-owned control panel for the browser automation in this repo. It does not provide arbitrary remote keyboard or mouse control to third-party browsers. The workflow remains limited to the target URL and scripts you configure here.
+      </div>
+
+      <div class="grid">
+        <section class="card">
+          <label for="target_url">Target URL</label>
+          <input id="target_url" type="text" value="https://grinding.tnstats.dev/" />
+
+          <label for="script_files" style="margin-top: 14px;">Script files to load in the same page</label>
+          <input id="script_files" type="text" value="script.js,script2.js" />
+          <div class="small" style="margin-top: 6px;">Use a comma-separated list, for example: <code>script.js,script2.js</code></div>
+
+          <label for="local_storage_json" style="margin-top: 14px;">Local storage JSON</label>
+          <textarea id="local_storage_json">{"theme":"dark","settings":{"sound":true}}</textarea>
+
+          <div class="row">
+            <button class="primary" id="save">Save config</button>
+            <button class="secondary" id="load">Load saved config</button>
+            <button class="secondary" id="copy">Copy workflow command</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <label for="workflow_command">Workflow command</label>
+          <textarea id="workflow_command" readonly>gh workflow run run-script.yml -f target_url='https://grinding.tnstats.dev/' -f local_storage_json='{"theme":"dark","settings":{"sound":true}}' -f script_files='script.js,script2.js'</textarea>
+
+          <div class="row">
+            <button class="primary" id="start">Generate start command</button>
+            <button class="danger" id="stop">Generate stop command</button>
+          </div>
+          <div class="small" style="margin-top: 10px;">The start command dispatches the run-script workflow. The stop command shows the GitHub CLI command to cancel an active workflow run for this repo.</div>
+        </section>
+      </div>
+
+      <div id="status" class="status" role="status">Ready.</div>
+    </div>
+
+    <script>
+      const STORAGE_KEY = 'runner-control-config-v1';
+      const targetInput = document.getElementById('target_url');
+      const scriptInput = document.getElementById('script_files');
+      const localStorageInput = document.getElementById('local_storage_json');
+      const workflowOutput = document.getElementById('workflow_command');
+      const statusEl = document.getElementById('status');
+
+      function showStatus(message, type = '') {
+        statusEl.textContent = message;
+        statusEl.className = 'status' + (type ? ` ${type}` : '');
+      }
+
+      function readConfig() {
+        const value = {
+          target_url: targetInput.value.trim() || 'https://grinding.tnstats.dev/',
+          script_files: scriptInput.value.trim() || 'script.js,script2.js',
+          local_storage_json: localStorageInput.value.trim() || '{}'
+        };
+
+        try {
+          JSON.parse(value.local_storage_json);
+        } catch (error) {
+          throw new Error('local_storage_json must be valid JSON.');
+        }
+
+        return value;
+      }
+
+      function toWorkflowCommand(mode = 'start') {
+        const config = readConfig();
+        const localJson = JSON.stringify(JSON.parse(config.local_storage_json));
+        const commandParts = [
+          'gh workflow run run-script.yml',
+          `-f target_url='${config.target_url.replace(/'/g, "'\\''")}'`,
+          `-f local_storage_json='${localJson.replace(/'/g, "'\\''")}'`,
+          `-f script_files='${config.script_files.replace(/'/g, "'\\''")}'`
+        ];
+
+        if (mode === 'stop') {
+          return 'gh run list --limit 10 --workflow run-script.yml && gh run cancel <RUN_ID>';
+        }
+
+        return commandParts.join(' ');
+      }
+
+      function updateWorkflowCommand() {
+        workflowOutput.value = toWorkflowCommand('start');
+      }
+
+      document.getElementById('save').addEventListener('click', () => {
+        try {
+          const config = readConfig();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+          updateWorkflowCommand();
+          showStatus('Saved runner settings for this browser.', 'success');
+        } catch (error) {
+          showStatus(error.message, 'error');
+        }
+      });
+
+      document.getElementById('load').addEventListener('click', () => {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          showStatus('No saved config found yet.', 'error');
+          return;
+        }
+
+        try {
+          const config = JSON.parse(raw);
+          targetInput.value = config.target_url || 'https://grinding.tnstats.dev/';
+          scriptInput.value = config.script_files || 'script.js,script2.js';
+          localStorageInput.value = config.local_storage_json || '{}';
+          updateWorkflowCommand();
+          showStatus('Loaded the saved runner config.', 'success');
+        } catch (error) {
+          showStatus('Saved config could not be loaded.', 'error');
+        }
+      });
+
+      document.getElementById('copy').addEventListener('click', async () => {
+        try {
+          updateWorkflowCommand();
+          await navigator.clipboard.writeText(workflowOutput.value);
+          showStatus('Copied the workflow dispatch command.', 'success');
+        } catch (error) {
+          showStatus('Clipboard copy failed. You can still copy the command manually.', 'error');
+        }
+      });
+
+      document.getElementById('start').addEventListener('click', () => {
+        try {
+          updateWorkflowCommand();
+          showStatus('Start command generated. Use it in a terminal or GitHub Actions UI.', 'success');
+        } catch (error) {
+          showStatus(error.message, 'error');
+        }
+      });
+
+      document.getElementById('stop').addEventListener('click', () => {
+        workflowOutput.value = toWorkflowCommand('stop');
+        showStatus('Stop command generated. Replace <RUN_ID> with the run ID you want to cancel.', 'success');
+      });
+
+      try {
+        updateWorkflowCommand();
+      } catch (error) {
+        showStatus(error.message, 'error');
+      }
+    </script>
+  </body>
+</html>
