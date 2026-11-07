@@ -2,8 +2,8 @@
   const START_DELAY_MS = 300;
   
   // === CONFIGURABLE INTERVALS (in milliseconds) ===
-  const INTERVAL_ITEM23_MS = 6075;   // How often Item 23 runs
-  const INTERVAL_BOOST_MS = 303750;   // How often Boost runs (e.g., 2 seconds)
+  const INTERVAL_ITEM23_MS = 6050;   // How often Item 23 runs
+  const INTERVAL_BOOST_MS = 302500;   // How often Boost runs (e.g., 2 seconds)
   // ===============================================
 
   function extractConst(name, scriptsText) {
