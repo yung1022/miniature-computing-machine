@@ -68,7 +68,8 @@ function buildGrowthMap(growthList) {
   for (const item of growthList) {
     if (!item || item.cid === undefined || item.cid === null) continue;
     const max = parseNumber(item.subGainMax, `subGainMax for ${item.cid}`);
-    const min = parseNumber(item.SubGainMin, `SubGainMin for ${item.cid}`);
+    // The API property is subGainMin (lowercase "s").
+    const min = parseNumber(item.subGainMin, `subGainMin for ${item.cid}`);
     growthById.set(String(item.cid), (max + min) / 2);
   }
   return growthById;
