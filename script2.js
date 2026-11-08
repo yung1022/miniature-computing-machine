@@ -5,7 +5,7 @@
   const INTERVAL_ITEM19_MS = 6050;   // How often Item 19 runs
   const INTERVAL_BOOST_MS = 302500;   // How often Boost runs (e.g., every 2 seconds)
   const INTERVAL_COLLAB_MS = 300500;  // How often Collab runs (e.g., every 1 second)
-  const TARGET_CHANNEL_ID = 'UCjrii0S-8k6sfc_ds3V-mRg'; // Change this easily
+  const TARGET_CHANNEL_ID = 'UCjrii0S-8k6sfc_ds3V-mRg'; // Change this to your target channel ID
   // =========================================================
 
   function extractConst(name, scriptsText) {
@@ -67,19 +67,9 @@
   if (window._autoGrindCollabTimeout) clearTimeout(window._autoGrindCollabTimeout);
   if (window.stopAutoGrind) delete window.stopAutoGrind;
 
-  // Generic command executor helper
-  function executeCommand(def, preAction) {
+  // Standard command executor for Item 19 and Boost
+  function executeStandardCommand(def) {
     if (!def) return;
-
-    // Run optional pre-action (e.g., pickCollab) before triggering command
-    if (typeof preAction === 'function') {
-      try {
-        preAction();
-      } catch (err) {
-        console.error('Pre-action threw:', err);
-      }
-    }
-
     const cmd = { type: def.type, gain: def.gain, label: def.label };
     const btn = document.createElement('button');
     const labelEl = document.createElement('span');
@@ -102,7 +92,7 @@
   if (item19Def) {
     window._autoGrindItem19Timeout = setTimeout(() => {
       window._autoGrindItem19Interval = setInterval(() => {
-        executeCommand(item19Def);
+        executeStandardCommand(item19Def);
       }, INTERVAL_ITEM19_MS);
       console.log(`Item 19 loop started (${INTERVAL_ITEM19_MS}ms).`);
     }, START_DELAY_MS);
@@ -112,25 +102,34 @@
   if (boostDef) {
     window._autoGrindBoostTimeout = setTimeout(() => {
       window._autoGrindBoostInterval = setInterval(() => {
-        executeCommand(boostDef);
+        executeStandardCommand(boostDef);
       }, INTERVAL_BOOST_MS);
       console.log(`Boost loop started (${INTERVAL_BOOST_MS}ms).`);
     }, START_DELAY_MS);
   }
 
-  // Start Collab Loop (Calls pickCollab first)
+  // Start Collab Loop using the custom Object.assign structure
   if (collabDef) {
     window._autoGrindCollabTimeout = setTimeout(() => {
       window._autoGrindCollabInterval = setInterval(() => {
-        executeCommand(collabDef, () => {
-          if (typeof window.pickCollab === 'function') {
-            window.pickCollab(TARGET_CHANNEL_ID);
-          } else {
-            console.warn('pickCollab() function is not available on window.');
-          }
-        });
+        if (typeof window.doCommand !== 'function') {
+          console.error('doCommand() not present on this page yet.');
+          return;
+        }
+
+        try {
+          const collabObj = Object.assign({}, collabDef, { extra: { to: TARGET_CHANNEL_ID } });
+          const collabButton = document.createElement('button');
+          const labelEl = document.createElement('span');
+          labelEl.textContent = collabDef.label || 'Collab';
+          collabButton.appendChild(labelEl);
+
+          window.doCommand(collabObj, collabButton);
+        } catch (err) {
+          console.error('doCommand (collab) threw:', err);
+        }
       }, INTERVAL_COLLAB_MS);
-      console.log(`Collab loop started (${INTERVAL_COLLAB_MS}ms) for channel ID: ${TARGET_CHANNEL_ID}`);
+      console.log(`Collab loop started (${INTERVAL_COLLAB_MS}ms) for target channel ID: ${TARGET_CHANNEL_ID}`);
     }, START_DELAY_MS);
   }
 
