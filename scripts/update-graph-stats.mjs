@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
-const fs = require('node:fs');
-const path = require('node:path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 const ROOT = process.cwd();
 const HISTORY_FILE = path.join(ROOT, 'data', 'graph-stats.json');
