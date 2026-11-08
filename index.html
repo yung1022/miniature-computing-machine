@@ -150,6 +150,7 @@
 
     async function loadStats() {
       refreshButton.disabled = true;
+      shareEl.textContent = "Updating…";
       setStatus("Loading channel statistics…");
       emptyEl.hidden = true;
       try {
@@ -207,7 +208,7 @@
         rows.appendChild(combinedTr);
 
         countEl.textContent = new Intl.NumberFormat().format(shownChannels.length);
-        shareEl.textContent = `${combinedShare.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`;
+        shareEl.textContent = `${combinedShare.toLocaleString(undefined, { maximumFractionDigits: 3 })}%`;
         updatedEl.textContent = new Date().toLocaleTimeString();
         emptyEl.hidden = shownChannels.length !== 0 || shownSubscribersTotal !== 0;
         setStatus(`Loaded ${shownChannels.length} channel${shownChannels.length === 1 ? "" : "s"}.`, "ok");
