@@ -5160,5 +5160,116 @@
         "growth": 69175725.5
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-08T14:30:32.272Z",
+    "subscriberShare": 1.5916221138758735,
+    "growthShare": 16.96744854415451,
+    "totalSubscribers": 45242788054,
+    "totalGrowth": 1810277552.5,
+    "fullSubscriberTotal": 2842558397472,
+    "fullGrowthTotal": 10669120627,
+    "channelSubscribers": [
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Max Verstappen ain't falling in Sao Paulo",
+        "value": 26959198508
+      },
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "Franz Hermann",
+        "value": 5243591728
+      },
+      {
+        "channelId": "UC7xekFOa6e9C4zReMA7485w",
+        "channelName": "Epstain",
+        "value": 4084678273
+      },
+      {
+        "channelId": "UCNQsjFMCytyH81nEpNN2YtQ",
+        "channelName": "Enrique",
+        "value": 3428304447
+      },
+      {
+        "channelId": "UCXlRi76oMC8T4vlVB2FYjsw",
+        "channelName": "cth if u see this, u suck",
+        "value": 2461806572
+      },
+      {
+        "channelId": "UCe76be8EuemfxZT4DSzYBZA",
+        "channelName": "cth",
+        "value": 1953218186
+      },
+      {
+        "channelId": "UCt6KDg7ftGLz-ftgvH2DtwA",
+        "channelName": "Kimi Antonelli - CAMPIONE DEL MONDO!",
+        "value": 745373858
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Haven is femboy",
+        "value": 237462231
+      },
+      {
+        "channelId": "UCoif5spcZemcWy1XTFSRumg",
+        "channelName": "CTH FINAL BOSS HAHAHA",
+        "value": 129154251
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Max Verstappen ain't falling in Sao Paulo",
+        "value": 14113355.5
+      },
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "Franz Hermann",
+        "value": 132849766.5
+      },
+      {
+        "channelId": "UC7xekFOa6e9C4zReMA7485w",
+        "channelName": "Epstain",
+        "value": 373875408
+      },
+      {
+        "channelId": "UCNQsjFMCytyH81nEpNN2YtQ",
+        "channelName": "Enrique",
+        "value": 372151264
+      },
+      {
+        "channelId": "UCXlRi76oMC8T4vlVB2FYjsw",
+        "channelName": "cth if u see this, u suck",
+        "value": 128563960
+      },
+      {
+        "channelId": "UCe76be8EuemfxZT4DSzYBZA",
+        "channelName": "cth",
+        "value": 154815393
+      },
+      {
+        "channelId": "UCt6KDg7ftGLz-ftgvH2DtwA",
+        "channelName": "Kimi Antonelli - CAMPIONE DEL MONDO!",
+        "value": 48008159.5
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Haven is femboy",
+        "value": 320806248.5
+      },
+      {
+        "channelId": "UCoif5spcZemcWy1XTFSRumg",
+        "channelName": "CTH FINAL BOSS HAHAHA",
+        "value": 265093997.5
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "FullDragonForce ツ",
+        "subscribers": 5714279473,
+        "growth": 67735902
+      }
+    ]
   }
 ]
