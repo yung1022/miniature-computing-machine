@@ -28,17 +28,17 @@
     .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; margin: 16px 0 24px; }
     .card { padding: 16px; min-width: 0; }
     .card p { margin: -5px 0 10px; color: #8b949e; font-size: .85rem; }
-    .chart { width: 100%; height: 260px; display: block; overflow: visible; }
     .chart-host { position: relative; }
+    .chart { width: 100%; height: 260px; display: block; overflow: visible; touch-action: pan-y; }
     .gridline { stroke: #30363d; stroke-width: 1; }
     .axis-label { fill: #8b949e; font: 11px system-ui, sans-serif; }
     .series-line { fill: none; stroke-width: 2; }
-    .point { cursor: pointer; stroke: #0d1117; stroke-width: 2; }
-    .point:hover, .point:focus { stroke: white; stroke-width: 3; outline: none; }
-    .point-tooltip { position: absolute; z-index: 3; max-width: min(240px, 80%); padding: 7px 10px; border: 1px solid #6e7681; border-radius: 7px; background: #f0f6fc; color: #0d1117; font: 600 13px system-ui, sans-serif; white-space: nowrap; box-shadow: 0 4px 14px #0008; transform: translate(-50%, calc(-100% - 10px)); pointer-events: none; }
-    .point-tooltip.below { transform: translate(-50%, 10px); }
-    .point-tooltip::after { content: ""; position: absolute; left: 50%; bottom: -6px; width: 10px; height: 10px; background: #f0f6fc; border-right: 1px solid #6e7681; border-bottom: 1px solid #6e7681; transform: translateX(-50%) rotate(45deg); }
-    .point-tooltip.below::after { top: -6px; bottom: auto; border: 0; border-top: 1px solid #6e7681; border-left: 1px solid #6e7681; }
+    .scrub-line { stroke: #e6edf3; stroke-opacity: .55; stroke-width: 1; stroke-dasharray: 4 3; pointer-events: none; }
+    .active-point { stroke: #fff; stroke-width: 2; pointer-events: none; }
+    .scrub-area { fill: transparent; cursor: crosshair; }
+    .chart-tooltip { position: absolute; z-index: 4; max-width: min(280px, 85%); padding: 7px 10px; border: 1px solid #6e7681; border-radius: 7px; background: #f0f6fc; color: #0d1117; font: 600 12px/1.45 system-ui, sans-serif; white-space: normal; box-shadow: 0 4px 14px #0008; transform: translate(-50%, calc(-100% - 9px)); pointer-events: none; }
+    .chart-tooltip.below { transform: translate(-50%, 9px); }
+    .chart-tooltip div + div { margin-top: 2px; }
     .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; color: #b1bac4; font-size: .8rem; }
     .legend-item { display: inline-flex; align-items: center; gap: 6px; }
     .swatch { width: 11px; height: 3px; border-radius: 2px; }
@@ -118,34 +118,22 @@
     function number(value) { const n = typeof value === "string" ? Number(value.replaceAll(",", "")) : Number(value); return Number.isFinite(n) ? n : 0; }
     function fmt(value) { return new Intl.NumberFormat().format(number(value)); }
     function setStatus(el, text, kind = "") { el.textContent = text; el.className = `status${kind ? ` ${kind}` : ""}`; }
-    function pointText(value, percent) {
-      return percent ? `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 })}%` : new Intl.NumberFormat().format(value);
-    }
-    function showPoint(host, x, y, width, height, value, percent) {
-      document.querySelectorAll(".point-tooltip").forEach((el) => el.remove());
-      const tooltip = document.createElement("div");
-      tooltip.className = `point-tooltip${y < 50 ? " below" : ""}`;
-      tooltip.textContent = pointText(value, percent);
-      tooltip.setAttribute("role", "status");
-      tooltip.style.left = `${Math.max(4, Math.min(host.clientWidth - 4, x / width * host.clientWidth))}px`;
-      tooltip.style.top = `${y / height * host.clientHeight}px`;
-      host.appendChild(tooltip);
-    }
+    function pointText(value, percent) { return percent ? `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 })}%` : new Intl.NumberFormat().format(value); }
 
     function chartSvg(targetId, series, options = {}) {
       const target = document.getElementById(targetId);
-      target.querySelectorAll(".point-tooltip").forEach((el) => el.remove());
+      target.querySelectorAll(".chart-tooltip").forEach(el => el.remove());
       const width = Math.max(300, target.clientWidth || 420), height = 260;
       const left = 66, right = 12, top = 14, bottom = 38;
       const plotW = width - left - right, plotH = height - top - bottom;
-      const finiteValues = series.flatMap(s => s.values.map(v => v.value).filter(Number.isFinite));
+      const finiteValues = series.flatMap(s => s.values.map(p => p.value).filter(Number.isFinite));
       if (!history.length || !finiteValues.length) { target.innerHTML = '<div class="status">No graph snapshots yet.</div>'; return; }
       let min = Math.min(...finiteValues), max = Math.max(...finiteValues);
       if (min === max) { const pad = Math.abs(min) * 0.05 || 1; min -= pad; max += pad; }
       const x = i => left + (history.length <= 1 ? plotW / 2 : i / (history.length - 1) * plotW);
       const y = v => top + (max - v) / (max - min) * plotH;
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("viewBox", `0 0 ${width} ${height}`); svg.setAttribute("class", "chart"); svg.setAttribute("role", "img");
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`); svg.setAttribute("class", "chart"); svg.setAttribute("aria-label", "Drag or move across the graph to inspect snapshot values");
       const add = (name, attrs, parent = svg) => { const node = document.createElementNS("http://www.w3.org/2000/svg", name); for (const [k,v] of Object.entries(attrs)) node.setAttribute(k, v); parent.appendChild(node); return node; };
       const axisFmt = options.percent ? v => `${v.toLocaleString(undefined, { maximumFractionDigits: 3 })}%` : v => new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 2 }).format(v);
       for (let t = 0; t <= 4; t++) {
@@ -160,20 +148,55 @@
       }
       series.forEach((s, si) => {
         const color = s.color || COLORS[si % COLORS.length];
-        let path = "", drawing = false;
-        s.values.forEach((point, i) => { if (!Number.isFinite(point.value)) { drawing = false; return; } path += `${drawing ? " L" : "M"}${x(i)},${y(point.value)}`; drawing = true; });
-        add("path", { d: path, class: "series-line", stroke: color });
-        s.values.forEach((point, i) => {
-          if (!Number.isFinite(point.value)) return;
-          const cx = x(i), cy = y(point.value);
-          const circle = add("circle", { cx, cy, r: 4, fill: color, class: "point", tabindex: 0, role: "button", "aria-label": `Show value ${pointText(point.value, options.percent)}` });
-          const title = add("title", {}, circle); title.textContent = pointText(point.value, options.percent);
-          const select = () => showPoint(target, cx, cy, width, height, point.value, options.percent);
-          circle.addEventListener("click", select);
-          circle.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(); } });
-        });
+        let d = "", drawing = false;
+        s.values.forEach((point, i) => { if (!Number.isFinite(point.value)) { drawing = false; return; } d += `${drawing ? " L" : "M"}${x(i)},${y(point.value)}`; drawing = true; });
+        add("path", { d, class: "series-line", stroke: color });
       });
-      target.replaceChildren(svg);
+      const cursor = add("line", { x1: x(0), y1: top, x2: x(0), y2: top + plotH, class: "scrub-line", visibility: "hidden" });
+      const activePoints = series.map(s => add("circle", { cx: x(0), cy: top, r: 5, fill: s.color, class: "active-point", visibility: "hidden" }));
+      const scrub = add("rect", { x: left, y: top, width: plotW, height: plotH, class: "scrub-area", tabindex: 0, role: "slider", "aria-label": "Slide through historical data points", "aria-valuemin": 1, "aria-valuemax": history.length, "aria-valuenow": 1 });
+      const tooltip = document.createElement("div"); tooltip.className = "chart-tooltip"; tooltip.hidden = true; target.appendChild(tooltip);
+      const selectIndex = index => {
+        const i = Math.max(0, Math.min(history.length - 1, index));
+        const px = x(i);
+        cursor.setAttribute("x1", px); cursor.setAttribute("x2", px); cursor.setAttribute("visibility", "visible");
+        let topY = height;
+        const tooltipLines = [];
+        series.forEach((s, si) => {
+          const point = s.values[i], marker = activePoints[si];
+          if (!point || !Number.isFinite(point.value)) { marker.setAttribute("visibility", "hidden"); return; }
+          const py = y(point.value); topY = Math.min(topY, py);
+          marker.setAttribute("cx", px); marker.setAttribute("cy", py); marker.setAttribute("fill", s.color || COLORS[si % COLORS.length]); marker.setAttribute("visibility", "visible");
+          tooltipLines.push({ name: s.name, value: pointText(point.value, options.percent) });
+        });
+        tooltip.replaceChildren();
+        for (const entry of tooltipLines) {
+          const line = document.createElement("div");
+          line.textContent = series.length > 1 ? `${entry.name}: ${entry.value}` : entry.value;
+          tooltip.appendChild(line);
+        }
+        tooltip.hidden = tooltipLines.length === 0;
+        tooltip.classList.toggle("below", topY < 60);
+        tooltip.style.left = `${Math.max(4, Math.min(target.clientWidth - 4, px / width * target.clientWidth))}px`;
+        tooltip.style.top = `${topY / height * height}px`;
+        scrub.setAttribute("aria-valuenow", String(i + 1));
+        scrub.setAttribute("aria-valuetext", tooltipLines.map(entry => `${entry.name}: ${entry.value}`).join(", "));
+      };
+      const indexFromPointer = event => {
+        const point = svg.createSVGPoint(); point.x = event.clientX; point.y = event.clientY;
+        const local = point.matrixTransform(svg.getScreenCTM().inverse());
+        const fraction = Math.max(0, Math.min(1, (local.x - left) / plotW));
+        selectIndex(Math.round(fraction * (history.length - 1)));
+      };
+      scrub.addEventListener("pointerdown", event => { scrub.setPointerCapture(event.pointerId); indexFromPointer(event); });
+      scrub.addEventListener("pointermove", event => { if (event.pointerType === "touch" && !scrub.hasPointerCapture(event.pointerId)) return; indexFromPointer(event); });
+      scrub.addEventListener("pointerup", event => { if (scrub.hasPointerCapture(event.pointerId)) scrub.releasePointerCapture(event.pointerId); });
+      scrub.addEventListener("pointerleave", event => { if (event.pointerType !== "touch" && !scrub.hasPointerCapture(event.pointerId)) { tooltip.hidden = true; cursor.setAttribute("visibility", "hidden"); activePoints.forEach(point => point.setAttribute("visibility", "hidden")); } });
+      scrub.addEventListener("keydown", event => {
+        if (event.key === "ArrowRight" || event.key === "ArrowUp") { event.preventDefault(); selectIndex(Number(scrub.getAttribute("aria-valuenow")));
+        } else if (event.key === "ArrowLeft" || event.key === "ArrowDown") { event.preventDefault(); selectIndex(Number(scrub.getAttribute("aria-valuenow")) - 2); }
+      });
+      target.replaceChildren(svg, tooltip);
     }
 
     function scalarSeries(key, chartId, name, color, percent = false) {
@@ -212,7 +235,7 @@
         const loaded = await response.json();
         history = Array.isArray(loaded) ? loaded : [];
         renderCharts();
-        setStatus(chartStatus, `Loaded ${history.length} snapshot${history.length === 1 ? "" : "s"}. Select a point to see its value.`, "ok");
+        setStatus(chartStatus, `Loaded ${history.length} snapshot${history.length === 1 ? "" : "s"}. Slide or move across a graph to inspect values.`, "ok");
       } catch (error) { setStatus(chartStatus, error.message, "error"); }
     }
 
