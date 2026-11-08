@@ -114,6 +114,20 @@
       throw new Error("Could not find a channel list in the stats response.");
     }
 
+    function extractGrowthList(payload) {
+      if (Array.isArray(payload)) return payload;
+      if (!payload || typeof payload !== "object") throw new Error("Unexpected growth response format.");
+      for (const key of ["data", "results", "growth", "items", "list"]) {
+        if (Array.isArray(payload[key])) return payload[key];
+        if (payload[key] && typeof payload[key] === "object") {
+          for (const nestedKey of ["data", "results", "growth", "items", "list"]) {
+            if (Array.isArray(payload[key][nestedKey])) return payload[key][nestedKey];
+          }
+        }
+      }
+      throw new Error("Could not find a growth list in the response.");
+    }
+
     function normalizeChannel(item) {
       if (!item || typeof item !== "object") return null;
       const id = firstValue(item, ["cid", "channelId", "channel_id", "channelID", "id"]);
@@ -127,31 +141,16 @@
       };
     }
 
-    function extractGrowthRecord(payload) {
-      if (Array.isArray(payload)) return payload[0] || null;
-      if (!payload || typeof payload !== "object") return null;
-      if (payload.subGainMax !== undefined || payload.SubGainMin !== undefined) return payload;
-      for (const key of ["data", "result", "growth", "item"]) {
-        const value = payload[key];
-        if (Array.isArray(value)) return value[0] || null;
-        if (value && typeof value === "object") return value;
+    function buildGrowthMap(growthList) {
+      const map = new Map();
+      for (const item of growthList) {
+        if (!item || item.cid === undefined || item.cid === null) continue;
+        const max = Number(item.subGainMax);
+        const min = Number(item.SubGainMin);
+        if (!Number.isFinite(max) || !Number.isFinite(min)) continue;
+        map.set(String(item.cid), (max + min) / 2);
       }
-      return null;
-    }
-
-    async function fetchChannelGrowth(channelId) {
-      const url = new URL(GROWTH_URL);
-      url.searchParams.set("cid", channelId);
-      const response = await fetch(url, { cache: "no-store" });
-      if (!response.ok) throw new Error(`Growth endpoint returned HTTP ${response.status} for channel ${channelId}.`);
-      const record = extractGrowthRecord(await response.json());
-      if (!record) throw new Error(`No growth data found for channel ${channelId}.`);
-      const max = Number(record.subGainMax);
-      const min = Number(record.SubGainMin);
-      if (!Number.isFinite(max) || !Number.isFinite(min)) {
-        throw new Error(`Invalid subGainMax/SubGainMin values for channel ${channelId}.`);
-      }
-      return (max + min) / 2;
+      return map;
     }
 
     function toNumber(value) {
@@ -190,27 +189,31 @@
       setStatus("Loading channel statistics…");
       emptyEl.hidden = true;
       try {
-        const [dataResponse, configResponse] = await Promise.all([
+        const [dataResponse, growthResponse, configResponse] = await Promise.all([
           fetch(DATA_URL, { cache: "no-store" }),
+          fetch(GROWTH_URL, { cache: "no-store" }),
           fetch(CONFIG_URL, { cache: "no-store" })
         ]);
         if (!dataResponse.ok) throw new Error(`Stats endpoint returned HTTP ${dataResponse.status}.`);
+        if (!growthResponse.ok) throw new Error(`Growth endpoint returned HTTP ${growthResponse.status}.`);
         if (!configResponse.ok) throw new Error(`Could not load channels.json (HTTP ${configResponse.status}).`);
 
-        const [payload, config] = await Promise.all([dataResponse.json(), configResponse.json()]);
+        const [payload, growthPayload, config] = await Promise.all([
+          dataResponse.json(),
+          growthResponse.json(),
+          configResponse.json()
+        ]);
         const configuredIds = Array.isArray(config.channelIds) ? config.channelIds.map(String) : [];
         const allowed = new Set(configuredIds);
         const fullChannels = extractChannels(payload).map(normalizeChannel).filter(Boolean);
+        const growthById = buildGrowthMap(extractGrowthList(growthPayload));
         const fullRankMap = buildRankMap(fullChannels);
-
-        const growthValues = await Promise.all(fullChannels.map((channel) => fetchChannelGrowth(channel.id)));
-        const growthById = new Map(fullChannels.map((channel, index) => [channel.id, growthValues[index]]));
         const shownChannels = fullChannels.filter((channel) => allowed.size === 0 || allowed.has(channel.id));
 
         const fullSubscribersTotal = fullChannels.reduce((sum, channel) => sum + toNumber(channel.subscribers), 0);
         const shownSubscribersTotal = shownChannels.reduce((sum, channel) => sum + toNumber(channel.subscribers), 0);
-        const fullGrowthTotal = growthValues.reduce((sum, growth) => sum + growth, 0);
-        const shownGrowthTotal = shownChannels.reduce((sum, channel) => sum + growthById.get(channel.id), 0);
+        const fullGrowthTotal = fullChannels.reduce((sum, channel) => sum + (growthById.get(channel.id) ?? 0), 0);
+        const shownGrowthTotal = shownChannels.reduce((sum, channel) => sum + (growthById.get(channel.id) ?? 0), 0);
 
         const combinedSubscriberEntry = { id: "combined-subscribers", subscribers: shownSubscribersTotal };
         const combinedSubscriberRank = buildRankMap([...fullChannels, combinedSubscriberEntry]).get(combinedSubscriberEntry.id) || 0;
@@ -218,11 +221,12 @@
         rows.replaceChildren();
         for (const channel of shownChannels) {
           const tr = document.createElement("tr");
+          const growth = growthById.get(channel.id);
           const values = [
             channel.name,
             channel.id,
             `${formatCount(channel.subscribers)} (#${fullRankMap.get(channel.id) || 0})`,
-            formatCount(growthById.get(channel.id))
+            growth === undefined ? "—" : formatCount(growth)
           ];
           for (const text of values) {
             const td = document.createElement("td");
