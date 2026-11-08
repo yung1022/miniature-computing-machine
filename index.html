@@ -146,7 +146,7 @@
       for (const item of growthList) {
         if (!item || item.cid === undefined || item.cid === null) continue;
         const max = Number(item.subGainMax);
-        const min = Number(item.SubGainMin);
+        const min = Number(item.subGainMin);
         if (!Number.isFinite(max) || !Number.isFinite(min)) continue;
         map.set(String(item.cid), (max + min) / 2);
       }
