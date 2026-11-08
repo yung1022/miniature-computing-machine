@@ -5,7 +5,9 @@
   const INTERVAL_ITEM19_MS = 6050;   // How often Item 19 runs
   const INTERVAL_BOOST_MS = 302500;   // How often Boost runs (e.g., every 2 seconds)
   const INTERVAL_COLLAB_MS = 301000;  // How often Collab runs (e.g., every 1 second)
-  const TARGET_CHANNEL_ID = 'UCjrii0S-8k6sfc_ds3V-mRg'; // Change this to your target channel ID
+  
+  // Target channel IDs array (Add as many IDs as you want here)
+  const TARGET_CHANNEL_IDS = ["UCjrii0S-8k6sfc_ds3V-mRg","UCHGCm5vwMUmfT6KnsCQY6Aw","UC7xekFOa6e9C4zReMA7485w","UCNQsjFMCytyH81nEpNN2YtQ","UCXlRi76oMC8T4vlVB2FYjsw","UCe76be8EuemfxZT4DSzYBZA","UCt6KDg7ftGLz-ftgvH2DtwA","UCXYnf-nl_sStB8nMbwWNNYg"];
   // =========================================================
 
   function extractConst(name, scriptsText) {
@@ -67,6 +69,32 @@
   if (window._autoGrindCollabTimeout) clearTimeout(window._autoGrindCollabTimeout);
   if (window.stopAutoGrind) delete window.stopAutoGrind;
 
+  // --- Shuffle Logic for Target Channel IDs ---
+  let shuffledChannels = [];
+  let channelIndex = 0;
+
+  function shuffle(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function getNextChannelId() {
+    // If we haven't started or have used all IDs in the current cycle, reshuffle
+    if (shuffledChannels.length === 0 || channelIndex >= shuffledChannels.length) {
+      shuffledChannels = shuffle(TARGET_CHANNEL_IDS);
+      channelIndex = 0;
+      console.log('[Collab] Reshuffled channel IDs order:', shuffledChannels);
+    }
+    const currentId = shuffledChannels[channelIndex];
+    channelIndex++;
+    return currentId;
+  }
+  // -------------------------------------------
+
   // Standard command executor for Item 19 and Boost
   function executeStandardCommand(def) {
     if (!def) return;
@@ -108,7 +136,7 @@
     }, START_DELAY_MS);
   }
 
-  // Start Collab Loop using the custom Object.assign structure
+  // Start Collab Loop using the shuffled channel ID sequence
   if (collabDef) {
     window._autoGrindCollabTimeout = setTimeout(() => {
       window._autoGrindCollabInterval = setInterval(() => {
@@ -118,7 +146,8 @@
         }
 
         try {
-          const collabObj = Object.assign({}, collabDef, { extra: { to: TARGET_CHANNEL_ID } });
+          const targetId = getNextChannelId();
+          const collabObj = Object.assign({}, collabDef, { extra: { to: targetId } });
           const collabButton = document.createElement('button');
           const labelEl = document.createElement('span');
           labelEl.textContent = collabDef.label || 'Collab';
@@ -129,7 +158,7 @@
           console.error('doCommand (collab) threw:', err);
         }
       }, INTERVAL_COLLAB_MS);
-      console.log(`Collab loop started (${INTERVAL_COLLAB_MS}ms) for target channel ID: ${TARGET_CHANNEL_ID}`);
+      console.log(`Collab loop started (${INTERVAL_COLLAB_MS}ms) with shuffled channel ID rotation.`);
     }, START_DELAY_MS);
   }
 
