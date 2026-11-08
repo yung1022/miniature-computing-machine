@@ -9,10 +9,11 @@
     :root { color-scheme: dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #e6edf3; background: #0d1117; }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; padding: 32px 18px; }
-    main { width: min(100%, 980px); margin: 0 auto; }
+    main { width: min(100%, 1100px); margin: 0 auto; }
     header { display: flex; justify-content: space-between; align-items: end; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; }
     .eyebrow { color: #8b949e; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
     h1 { margin: 6px 0 0; font-size: clamp(1.8rem, 5vw, 2.5rem); }
+    h2 { margin: 0 0 14px; font-size: 1.15rem; }
     p { color: #b1bac4; line-height: 1.55; }
     button, a.button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 0 15px; border: 1px solid #3fb950; border-radius: 8px; background: #238636; color: white; font: inherit; font-weight: 650; text-decoration: none; cursor: pointer; }
     button:hover, a.button:hover { background: #2ea043; }
@@ -22,7 +23,7 @@
     .toolbar a.button:hover { background: #30363d; }
     .summary { display: flex; gap: 18px; flex-wrap: wrap; margin: 18px 0; color: #8b949e; font-size: .92rem; }
     .summary strong { color: #e6edf3; }
-    .panel { overflow: hidden; border: 1px solid #30363d; border-radius: 12px; background: #161b22; }
+    .panel, .chart-card { overflow: hidden; border: 1px solid #30363d; border-radius: 12px; background: #161b22; }
     .status { padding: 14px 16px; border-bottom: 1px solid #30363d; color: #8b949e; }
     .status.error { color: #ff7b72; }
     .status.ok { color: #3fb950; }
@@ -36,7 +37,16 @@
     .help { margin-top: 16px; padding: 14px 16px; border-left: 3px solid #d29922; border-radius: 4px; background: #161b22; color: #b1bac4; font-size: .92rem; }
     code { color: #79c0ff; }
     footer { margin-top: 18px; color: #8b949e; font-size: .83rem; }
-    @media (max-width: 520px) { th, td { padding: 12px 10px; } }
+    .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; margin: 22px 0; }
+    .chart-card { padding: 16px; min-width: 0; }
+    .chart-card p { margin: -6px 0 12px; color: #8b949e; font-size: .85rem; }
+    .chart-wrap { position: relative; height: 260px; }
+    canvas { display: block; width: 100%; height: 100%; }
+    .legend { display: flex; gap: 8px 14px; flex-wrap: wrap; margin-top: 10px; color: #b1bac4; font-size: .8rem; }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .legend-swatch { display: inline-block; width: 11px; height: 3px; border-radius: 2px; }
+    .chart-empty { color: #8b949e; padding: 50px 10px; text-align: center; }
+    @media (max-width: 520px) { th, td { padding: 12px 10px; } .chart-wrap { height: 220px; } }
   </style>
 </head>
 <body>
@@ -60,7 +70,20 @@
       <span>Updated: <strong id="updated">—</strong></span>
     </div>
 
-    <section class="panel" aria-label="Channel statistics">
+    <section aria-label="Historical graph statistics">
+      <h2>Graph stats</h2>
+      <div id="chart-status" class="status" role="status">Loading graph history…</div>
+      <div class="charts">
+        <article class="chart-card"><h2>Subscriber share</h2><p>Visible channels' share of all subscribers</p><div class="chart-wrap"><canvas id="chart-subscriber-share" aria-label="Subscriber share over time"></canvas></div></article>
+        <article class="chart-card"><h2>Growth share</h2><p>Visible channels' share of total growth</p><div class="chart-wrap"><canvas id="chart-growth-share" aria-label="Growth share over time"></canvas></div></article>
+        <article class="chart-card"><h2>Total subscribers</h2><p>Combined subscribers for channels shown</p><div class="chart-wrap"><canvas id="chart-total-subscribers" aria-label="Total subscribers over time"></canvas></div></article>
+        <article class="chart-card"><h2>Subscribers by channel</h2><p>All shown channels together in one chart</p><div class="chart-wrap"><canvas id="chart-channel-subscribers" aria-label="Subscribers per channel over time"></canvas></div><div id="legend-channel-subscribers" class="legend"></div></article>
+        <article class="chart-card"><h2>Total growth</h2><p>Combined average growth for channels shown</p><div class="chart-wrap"><canvas id="chart-total-growth" aria-label="Total growth over time"></canvas></div></article>
+        <article class="chart-card"><h2>Growth by channel</h2><p>All shown channels together in one chart</p><div class="chart-wrap"><canvas id="chart-channel-growth" aria-label="Growth per channel over time"></canvas></div><div id="legend-channel-growth" class="legend"></div></article>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Current channel statistics">
       <div id="status" class="status" role="status">Loading channel statistics…</div>
       <div class="table-wrap">
         <table>
@@ -72,9 +95,9 @@
     </section>
 
     <aside class="help">
-      To filter the feed, edit <code>channels.json</code> in the repository and add channel IDs to its <code>channelIds</code> array, for example <code>["channel-id-1", "channel-id-2"]</code>. An empty array shows all channels in the feed. Values are matched as strings.
+      To filter the feed, edit <code>channels.json</code> in the repository and add channel IDs to its <code>channelIds</code> array. An empty array shows all channels in the feed.
     </aside>
-    <footer>Data source: <code>https://fyscs1-private-canada5493.tnstats.dev/public/s9_data</code> and <code>https://public-database.tnstats.dev/s1_growth</code></footer>
+    <footer>Data source: <code>https://fyscs1-private-canada5493.tnstats.dev/public/s9_data</code>, <code>https://public-database.tnstats.dev/s1_growth</code>, and <code>data/graph-stats.json</code></footer>
   </main>
 
   <script>
@@ -82,194 +105,267 @@
     const DATA_URL = "https://fyscs1-private-canada5493.tnstats.dev/public/s9_data";
     const GROWTH_URL = "https://public-database.tnstats.dev/s1_growth";
     const CONFIG_URL = "./channels.json";
+    const HISTORY_URL = "./data/graph-stats.json";
     const REFRESH_INTERVAL_MS = 30_000;
     const rows = document.getElementById("rows");
     const statusEl = document.getElementById("status");
+    const chartStatusEl = document.getElementById("chart-status");
     const emptyEl = document.getElementById("empty");
     const countEl = document.getElementById("count");
     const subscriberShareEl = document.getElementById("subscriber-share");
     const growthShareEl = document.getElementById("growth-share");
     const updatedEl = document.getElementById("updated");
     const refreshButton = document.getElementById("refresh");
+    const chartColors = ["#58a6ff", "#3fb950", "#f0883e", "#bc8cff", "#ff7b72", "#39c5cf", "#d2a8ff", "#e3b341", "#f778ba", "#8b949e", "#7ee787", "#ffa657"];
     let loading = false;
+    let graphHistory = [];
 
     function firstValue(obj, keys) {
-      for (const key of keys) {
-        if (obj && obj[key] !== undefined && obj[key] !== null) return obj[key];
-      }
+      for (const key of keys) if (obj && obj[key] !== undefined && obj[key] !== null) return obj[key];
       return undefined;
     }
 
-    function extractChannels(payload) {
+    function extractList(payload, kind) {
       if (Array.isArray(payload)) return payload;
-      if (!payload || typeof payload !== "object") throw new Error("Unexpected stats response format.");
-      for (const key of ["channels", "data", "results", "items", "list"]) {
+      if (!payload || typeof payload !== "object") throw new Error(`Unexpected ${kind} response format.`);
+      const keys = kind === "channel stats" ? ["channels", "data", "results", "items", "list"] : ["data", "results", "growth", "items", "list"];
+      for (const key of keys) {
         if (Array.isArray(payload[key])) return payload[key];
         if (payload[key] && typeof payload[key] === "object") {
-          for (const nestedKey of ["channels", "items", "results"]) {
-            if (Array.isArray(payload[key][nestedKey])) return payload[key][nestedKey];
-          }
+          for (const nestedKey of keys) if (Array.isArray(payload[key][nestedKey])) return payload[key][nestedKey];
         }
       }
-      throw new Error("Could not find a channel list in the stats response.");
-    }
-
-    function extractGrowthList(payload) {
-      if (Array.isArray(payload)) return payload;
-      if (!payload || typeof payload !== "object") throw new Error("Unexpected growth response format.");
-      for (const key of ["data", "results", "growth", "items", "list"]) {
-        if (Array.isArray(payload[key])) return payload[key];
-        if (payload[key] && typeof payload[key] === "object") {
-          for (const nestedKey of ["data", "results", "growth", "items", "list"]) {
-            if (Array.isArray(payload[key][nestedKey])) return payload[key][nestedKey];
-          }
-        }
-      }
-      throw new Error("Could not find a growth list in the response.");
+      throw new Error(`Could not find a ${kind} list in the response.`);
     }
 
     function normalizeChannel(item) {
       if (!item || typeof item !== "object") return null;
       const id = firstValue(item, ["cid", "channelId", "channel_id", "channelID", "id"]);
+      if (id === undefined) return null;
       const name = firstValue(item, ["cname", "channelName", "channel_name", "name", "title", "channel"]);
       const subscribers = firstValue(item, ["subscriberCountRealAPI", "subscribers", "subscriberCount", "subscriber_count", "subscribers_count", "count"]);
-      if (id === undefined) return null;
-      return {
-        id: String(id),
-        name: name === undefined ? String(id) : String(name),
-        subscribers: subscribers === undefined ? "—" : subscribers
-      };
+      return { id: String(id), name: name === undefined ? String(id) : String(name), subscribers: subscribers === undefined ? "—" : subscribers };
     }
 
-    function buildGrowthMap(growthList) {
+    function buildGrowthMap(list) {
       const map = new Map();
-      for (const item of growthList) {
+      for (const item of list) {
         if (!item || item.cid === undefined || item.cid === null) continue;
         const max = Number(item.subGainMax);
-        const min = Number(item.subGainMin);
-        if (!Number.isFinite(max) || !Number.isFinite(min)) continue;
-        map.set(String(item.cid), (max + min) / 2);
+        const min = Number(item.SubGainMin ?? item.subGainMin);
+        if (Number.isFinite(max) && Number.isFinite(min)) map.set(String(item.cid), (max + min) / 2);
       }
       return map;
     }
 
     function toNumber(value) {
-      const n = Number(value);
+      const n = typeof value === "string" ? Number(value.replaceAll(",", "")) : Number(value);
       return Number.isFinite(n) ? n : 0;
     }
 
     function formatCount(value) {
-      const n = Number(value);
-      return value !== "" && Number.isFinite(n) ? new Intl.NumberFormat().format(n) : String(value);
+      const n = toNumber(value);
+      return value !== "" && Number.isFinite(Number(value)) ? new Intl.NumberFormat().format(n) : String(value);
     }
 
     function buildRankMap(channels) {
-      const ranked = [...channels]
-        .filter((channel) => Number.isFinite(toNumber(channel.subscribers)))
-        .sort((a, b) => toNumber(b.subscribers) - toNumber(a.subscribers));
-      const rankMap = new Map();
-      ranked.forEach((channel, index) => rankMap.set(channel.id, index + 1));
-      return rankMap;
+      const sorted = [...channels].sort((a, b) => toNumber(b.subscribers) - toNumber(a.subscribers));
+      return new Map(sorted.map((channel, index) => [channel.id, index + 1]));
     }
 
     function formatShare(numerator, denominator) {
-      const percentage = denominator !== 0 ? (numerator / denominator) * 100 : 0;
-      return `${percentage.toLocaleString(undefined, { maximumFractionDigits: 6 })}%`;
+      return `${(denominator ? numerator / denominator * 100 : 0).toLocaleString(undefined, { maximumFractionDigits: 6 })}%`;
     }
 
-    function setStatus(message, kind) {
-      statusEl.textContent = message;
-      statusEl.className = `status${kind ? ` ${kind}` : ""}`;
+    function setStatus(element, message, kind) {
+      element.textContent = message;
+      element.className = `status${kind ? ` ${kind}` : ""}`;
+    }
+
+    function drawChart(canvasId, series, options = {}) {
+      const canvas = document.getElementById(canvasId);
+      const wrap = canvas.parentElement;
+      const width = Math.max(300, wrap.clientWidth);
+      const height = Math.max(180, wrap.clientHeight);
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      const ctx = canvas.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+
+      const validSeries = series.filter((item) => item.points.length > 0);
+      if (!graphHistory.length || !validSeries.length) {
+        ctx.fillStyle = "#8b949e";
+        ctx.font = "14px system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText("No graph snapshots yet", width / 2, height / 2);
+        return;
+      }
+
+      const pad = { left: 58, right: 12, top: 14, bottom: 34 };
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+      const values = validSeries.flatMap((item) => item.points.map((point) => point.value).filter(Number.isFinite));
+      let min = options.zeroBased ? 0 : Math.min(...values);
+      let max = Math.max(...values);
+      if (min === max) { const extra = Math.abs(max) * 0.1 || 1; if (!options.zeroBased) min -= extra; max += extra; }
+      if (options.zeroBased && max <= 0) max = 1;
+      const y = (value) => pad.top + (max - value) / (max - min) * plotH;
+      const x = (index) => pad.left + (graphHistory.length < 2 ? plotW / 2 : index / (graphHistory.length - 1) * plotW);
+
+      ctx.font = "11px system-ui";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      for (let tick = 0; tick <= 4; tick++) {
+        const value = min + (max - min) * tick / 4;
+        const yy = pad.top + plotH - plotH * tick / 4;
+        ctx.strokeStyle = "#30363d";
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(pad.left, yy); ctx.lineTo(width - pad.right, yy); ctx.stroke();
+        ctx.fillStyle = "#8b949e";
+        ctx.fillText(options.percent ? `${value.toFixed(1)}%` : new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(value), pad.left - 7, yy);
+      }
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      const tickIndexes = [...new Set([0, Math.floor((graphHistory.length - 1) / 2), graphHistory.length - 1])];
+      for (const index of tickIndexes) {
+        const date = new Date(graphHistory[index].timestamp);
+        const label = Number.isNaN(date.getTime()) ? String(index + 1) : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+        ctx.fillStyle = "#8b949e";
+        ctx.fillText(label, x(index), height - pad.bottom + 9);
+      }
+
+      validSeries.forEach((item, seriesIndex) => {
+        ctx.strokeStyle = item.color || chartColors[seriesIndex % chartColors.length];
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        let started = false;
+        item.points.forEach((point, index) => {
+          if (!Number.isFinite(point.value)) return;
+          const px = x(index), py = y(point.value);
+          if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+        });
+        ctx.stroke();
+      });
+    }
+
+    function renderGroupedChart(canvasId, legendId, key) {
+      const channels = new Map();
+      for (const snapshot of graphHistory) {
+        const list = Array.isArray(snapshot[key]) ? snapshot[key] : [];
+        for (const entry of list) {
+          const id = String(entry.channelId ?? entry.cid ?? entry.id ?? entry.channelName ?? "unknown");
+          const name = entry.channelName || id;
+          if (!channels.has(id)) channels.set(id, { name, values: [] });
+        }
+      }
+      const ids = [...channels.keys()];
+      const series = ids.map((id, seriesIndex) => {
+        const channel = channels.get(id);
+        const valueBySnapshot = graphHistory.map((snapshot) => {
+          const list = Array.isArray(snapshot[key]) ? snapshot[key] : [];
+          const found = list.find((entry) => String(entry.channelId ?? entry.cid ?? entry.id ?? entry.channelName ?? "unknown") === id);
+          return found ? toNumber(found.value ?? found.subscribers ?? found.growth) : NaN;
+        });
+        return { name: channel.name, color: chartColors[seriesIndex % chartColors.length], points: valueBySnapshot.map((value) => ({ value })) };
+      });
+      const legend = document.getElementById(legendId);
+      legend.replaceChildren();
+      series.forEach((item) => {
+        const label = document.createElement("span"); label.className = "legend-item";
+        const swatch = document.createElement("i"); swatch.className = "legend-swatch"; swatch.style.backgroundColor = item.color;
+        const text = document.createElement("span"); text.textContent = item.name;
+        label.append(swatch, text); legend.appendChild(label);
+      });
+      drawChart(canvasId, series, { zeroBased: key === "channelSubscribers" });
+    }
+
+    function renderGraphHistory(history) {
+      graphHistory = Array.isArray(history) ? history.filter((item) => item && typeof item === "object") : [];
+      const scalarCharts = [
+        ["chart-subscriber-share", "subscriberShare", true, true],
+        ["chart-growth-share", "growthShare", true, true],
+        ["chart-total-subscribers", "totalSubscribers", false, true],
+        ["chart-total-growth", "totalGrowth", false, false]
+      ];
+      for (const [canvasId, key, percent, zeroBased] of scalarCharts) {
+        drawChart(canvasId, [{ points: graphHistory.map((snapshot) => ({ value: Number(snapshot[key]) })).filter((point) => Number.isFinite(point.value)), color: chartColors[0] }], { percent, zeroBased });
+      }
+      renderGroupedChart("chart-channel-subscribers", "legend-channel-subscribers", "channelSubscribers");
+      renderGroupedChart("chart-channel-growth", "legend-channel-growth", "channelGrowth");
+      setStatus(chartStatusEl, `Loaded ${graphHistory.length} graph snapshot${graphHistory.length === 1 ? "" : "s"}.`, "ok");
+    }
+
+    async function refreshGraphHistory() {
+      try {
+        const response = await fetch(`${HISTORY_URL}?_=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`Graph history returned HTTP ${response.status}.`);
+        renderGraphHistory(await response.json());
+      } catch (error) {
+        setStatus(chartStatusEl, `${error.message} Check that data/graph-stats.json is valid JSON.`, "error");
+      }
     }
 
     async function loadStats() {
       if (loading) return;
       loading = true;
       refreshButton.disabled = true;
-      setStatus("Loading channel statistics…");
+      setStatus(statusEl, "Loading channel statistics…");
       emptyEl.hidden = true;
       try {
         const [dataResponse, growthResponse, configResponse] = await Promise.all([
-          fetch(DATA_URL, { cache: "no-store" }),
-          fetch(GROWTH_URL, { cache: "no-store" }),
-          fetch(CONFIG_URL, { cache: "no-store" })
+          fetch(DATA_URL, { cache: "no-store" }), fetch(GROWTH_URL, { cache: "no-store" }), fetch(CONFIG_URL, { cache: "no-store" })
         ]);
         if (!dataResponse.ok) throw new Error(`Stats endpoint returned HTTP ${dataResponse.status}.`);
         if (!growthResponse.ok) throw new Error(`Growth endpoint returned HTTP ${growthResponse.status}.`);
         if (!configResponse.ok) throw new Error(`Could not load channels.json (HTTP ${configResponse.status}).`);
-
-        const [payload, growthPayload, config] = await Promise.all([
-          dataResponse.json(),
-          growthResponse.json(),
-          configResponse.json()
-        ]);
-        const configuredIds = Array.isArray(config.channelIds) ? config.channelIds.map(String) : [];
-        const allowed = new Set(configuredIds);
-        const fullChannels = extractChannels(payload).map(normalizeChannel).filter(Boolean);
-        const growthById = buildGrowthMap(extractGrowthList(growthPayload));
+        const [payload, growthPayload, config] = await Promise.all([dataResponse.json(), growthResponse.json(), configResponse.json()]);
+        const allowed = new Set(Array.isArray(config.channelIds) ? config.channelIds.map(String) : []);
+        const fullChannels = extractList(payload, "channel stats").map(normalizeChannel).filter(Boolean);
+        const growthById = new Map();
+        for (const item of extractList(growthPayload, "growth")) {
+          if (!item || item.cid === undefined || item.cid === null) continue;
+          const max = Number(item.subGainMax);
+          const min = Number(item.SubGainMin ?? item.subGainMin);
+          if (Number.isFinite(max) && Number.isFinite(min)) growthById.set(String(item.cid), (max + min) / 2);
+        }
         const fullRankMap = buildRankMap(fullChannels);
         const shownChannels = fullChannels.filter((channel) => allowed.size === 0 || allowed.has(channel.id));
-
-        const fullSubscribersTotal = fullChannels.reduce((sum, channel) => sum + toNumber(channel.subscribers), 0);
-        const shownSubscribersTotal = shownChannels.reduce((sum, channel) => sum + toNumber(channel.subscribers), 0);
-        const fullGrowthTotal = fullChannels.reduce((sum, channel) => sum + (growthById.get(channel.id) ?? 0), 0);
-        const shownGrowthTotal = shownChannels.reduce((sum, channel) => sum + (growthById.get(channel.id) ?? 0), 0);
-
-        const combinedSubscriberEntry = { id: "combined-subscribers", subscribers: shownSubscribersTotal };
-        const combinedSubscriberRank = buildRankMap([...fullChannels, combinedSubscriberEntry]).get(combinedSubscriberEntry.id) || 0;
+        const fullSubscriberTotal = fullChannels.reduce((sum, channel) => sum + toNumber(channel.subscribers), 0);
+        const shownSubscriberTotal = shownChannels.reduce((sum, channel) => sum + toNumber(channel.subscribers), 0);
+        const combinedGrowth = shownChannels.reduce((sum, channel) => sum + (growthById.get(channel.id) ?? 0), 0);
+        const fullGrowth = fullChannels.reduce((sum, channel) => sum + (growthById.get(channel.id) ?? 0), 0);
 
         rows.replaceChildren();
         for (const channel of shownChannels) {
           const tr = document.createElement("tr");
-          const growth = growthById.get(channel.id);
-          const values = [
-            channel.name,
-            channel.id,
-            `${formatCount(channel.subscribers)} (#${fullRankMap.get(channel.id) || 0})`,
-            growth === undefined ? "—" : formatCount(growth)
-          ];
-          for (const text of values) {
-            const td = document.createElement("td");
-            td.textContent = text;
-            tr.appendChild(td);
+          for (const text of [channel.name, channel.id, `${formatCount(channel.subscribers)} (#${fullRankMap.get(channel.id) || 0})`, growthById.has(channel.id) ? formatCount(growthById.get(channel.id)) : "—"]) {
+            const td = document.createElement("td"); td.textContent = text; tr.appendChild(td);
           }
           rows.appendChild(tr);
         }
-
-        const combinedTr = document.createElement("tr");
-        for (const text of [
-          "Combined totals",
-          "combined",
-          `${formatCount(shownSubscribersTotal)} (#${combinedSubscriberRank})`,
-          formatCount(shownGrowthTotal)
-        ]) {
-          const td = document.createElement("td");
-          td.textContent = text;
-          combinedTr.appendChild(td);
-        }
-        rows.appendChild(combinedTr);
-
         countEl.textContent = new Intl.NumberFormat().format(shownChannels.length);
-        subscriberShareEl.textContent = formatShare(shownSubscribersTotal, fullSubscribersTotal);
-        growthShareEl.textContent = formatShare(shownGrowthTotal, fullGrowthTotal);
+        subscriberShareEl.textContent = formatShare(shownSubscriberTotal, fullSubscriberTotal);
+        growthShareEl.textContent = formatShare(combinedGrowth, fullGrowth);
         updatedEl.textContent = new Date().toLocaleTimeString();
-        emptyEl.hidden = shownChannels.length !== 0 || shownSubscribersTotal !== 0;
-        setStatus(`Loaded ${shownChannels.length} channel${shownChannels.length === 1 ? "" : "s"}.`, "ok");
+        emptyEl.hidden = shownChannels.length !== 0;
+        setStatus(statusEl, `Loaded ${shownChannels.length} channel${shownChannels.length === 1 ? "" : "s"}.`, "ok");
       } catch (error) {
-        setStatus(`${error.message} If this is a CORS error, the stats server must allow this page's origin.`, "error");
-        countEl.textContent = "—";
-        subscriberShareEl.textContent = "—";
-        growthShareEl.textContent = "—";
-        emptyEl.hidden = true;
+        setStatus(statusEl, `${error.message} If this is a CORS error, the stats server must allow this page's origin.`, "error");
+        countEl.textContent = "—"; subscriberShareEl.textContent = "—"; growthShareEl.textContent = "—"; emptyEl.hidden = true;
       } finally {
         loading = false;
         refreshButton.disabled = false;
       }
     }
 
-    refreshButton.addEventListener("click", loadStats);
+    refreshButton.addEventListener("click", () => { loadStats(); refreshGraphHistory(); });
+    window.addEventListener("resize", () => renderGraphHistory(graphHistory));
     loadStats();
-    setInterval(loadStats, REFRESH_INTERVAL_MS);
+    refreshGraphHistory();
+    setInterval(() => { loadStats(); refreshGraphHistory(); }, REFRESH_INTERVAL_MS);
   </script>
 </body>
 </html>
