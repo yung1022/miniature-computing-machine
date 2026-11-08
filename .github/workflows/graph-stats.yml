@@ -1,0 +1,38 @@
+name: Graph Stats Snapshot
+
+on:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [graph-stats]
+
+jobs:
+  save-graph-stats:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Append graph stats snapshot
+        run: node scripts/update-graph-stats.mjs
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- data/graph-stats.json; then
+            echo "No graph stats changes to commit."
+            exit 0
+          fi
+
+          git add data/graph-stats.json
+          git commit -m "Add graph stats snapshot"
+          git push
