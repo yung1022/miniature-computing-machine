@@ -19,29 +19,19 @@ function firstValue(object, keys) {
 
 function extractList(payload, listName) {
   if (Array.isArray(payload)) return payload;
-  if (!payload || typeof payload !== 'object') {
-    throw new Error(`Unexpected ${listName} response format.`);
-  }
-
-  const keys = listName === 'channel stats'
-    ? ['channels', 'data', 'results', 'items', 'list']
-    : ['data', 'results', 'growth', 'items', 'list'];
-
+  if (!payload || typeof payload !== 'object') throw new Error(`Unexpected ${listName} response format.`);
+  const keys = listName === 'channel stats' ? ['channels', 'data', 'results', 'items', 'list'] : ['data', 'results', 'growth', 'items', 'list'];
   for (const key of keys) {
     if (Array.isArray(payload[key])) return payload[key];
     if (payload[key] && typeof payload[key] === 'object') {
-      for (const nestedKey of keys) {
-        if (Array.isArray(payload[key][nestedKey])) return payload[key][nestedKey];
-      }
+      for (const nestedKey of keys) if (Array.isArray(payload[key][nestedKey])) return payload[key][nestedKey];
     }
   }
   throw new Error(`Could not find a ${listName} list in the response.`);
 }
 
 function parseNumber(value, description) {
-  const number = typeof value === 'string'
-    ? Number(value.replaceAll(',', '').trim())
-    : Number(value);
+  const number = typeof value === 'string' ? Number(value.replaceAll(',', '').trim()) : Number(value);
   if (!Number.isFinite(number)) throw new Error(`Invalid numeric ${description}: ${String(value)}`);
   return number;
 }
@@ -50,17 +40,9 @@ function normalizeChannel(item) {
   if (!item || typeof item !== 'object') return null;
   const id = firstValue(item, ['cid', 'channelId', 'channel_id', 'channelID', 'id']);
   if (id === undefined) return null;
-
   const name = firstValue(item, ['cname', 'channelName', 'channel_name', 'name', 'title', 'channel']);
-  const rawSubscribers = firstValue(item, [
-    'subscriberCountRealAPI', 'subscribers', 'subscriberCount', 'subscriber_count', 'subscribers_count', 'count'
-  ]);
-
-  return {
-    id: String(id),
-    name: name === undefined ? String(id) : String(name),
-    subscribers: rawSubscribers === undefined ? 0 : parseNumber(rawSubscribers, `subscriber count for ${id}`)
-  };
+  const rawSubscribers = firstValue(item, ['subscriberCountRealAPI', 'subscribers', 'subscriberCount', 'subscriber_count', 'subscribers_count', 'count']);
+  return { id: String(id), name: name === undefined ? String(id) : String(name), subscribers: rawSubscribers === undefined ? 0 : parseNumber(rawSubscribers, `subscriber count for ${id}`) };
 }
 
 function buildGrowthMap(growthList) {
@@ -68,7 +50,6 @@ function buildGrowthMap(growthList) {
   for (const item of growthList) {
     if (!item || item.cid === undefined || item.cid === null) continue;
     const max = parseNumber(item.subGainMax, `subGainMax for ${item.cid}`);
-    // The API property is subGainMin (lowercase "s").
     const min = parseNumber(item.subGainMin, `subGainMin for ${item.cid}`);
     growthById.set(String(item.cid), (max + min) / 2);
   }
@@ -81,9 +62,7 @@ async function fetchJson(url) {
   return response.json();
 }
 
-function percentShare(part, whole) {
-  return whole === 0 ? 0 : (part / whole) * 100;
-}
+function percentShare(part, whole) { return whole === 0 ? 0 : (part / whole) * 100; }
 
 function readHistory() {
   if (!fs.existsSync(HISTORY_FILE)) return [];
@@ -94,36 +73,28 @@ function readHistory() {
 
 async function main() {
   const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-  const configuredIds = Array.isArray(config.channelIds) ? config.channelIds.map(String) : [];
-  const allowedIds = new Set(configuredIds);
-
-  // Fetch each complete feed once; growth records are matched by cid below.
-  const [statsPayload, growthPayload] = await Promise.all([
-    fetchJson(STATS_URL),
-    fetchJson(GROWTH_URL)
-  ]);
-
+  const configuredIds = new Set(Array.isArray(config.channelIds) ? config.channelIds.map(String) : []);
+  const excludedIds = new Set(Array.isArray(config.excludedChannelIds) ? config.excludedChannelIds.map(String) : []);
+  const [statsPayload, growthPayload] = await Promise.all([fetchJson(STATS_URL), fetchJson(GROWTH_URL)]);
   const allChannels = extractList(statsPayload, 'channel stats').map(normalizeChannel).filter(Boolean);
   const growthById = buildGrowthMap(extractList(growthPayload, 'growth'));
-  const shownChannels = allChannels.filter((channel) => allowedIds.size === 0 || allowedIds.has(channel.id));
 
-  const allSubscriberTotal = allChannels.reduce((total, channel) => total + channel.subscribers, 0);
-  const shownSubscriberTotal = shownChannels.reduce((total, channel) => total + channel.subscribers, 0);
-  const allGrowthTotal = allChannels.reduce((total, channel) => total + (growthById.get(channel.id) ?? 0), 0);
-  const shownGrowthTotal = shownChannels.reduce((total, channel) => total + (growthById.get(channel.id) ?? 0), 0);
+  // Excluded channels are omitted from graph data and all aggregate calculations.
+  const eligibleChannels = allChannels.filter((channel) => !excludedIds.has(channel.id));
+  const shownChannels = eligibleChannels.filter((channel) => configuredIds.size === 0 || configuredIds.has(channel.id));
+  const totalSubscribers = shownChannels.reduce((total, channel) => total + channel.subscribers, 0);
+  const eligibleSubscriberTotal = eligibleChannels.reduce((total, channel) => total + channel.subscribers, 0);
+  const totalGrowth = shownChannels.reduce((total, channel) => total + (growthById.get(channel.id) ?? 0), 0);
+  const eligibleGrowthTotal = eligibleChannels.reduce((total, channel) => total + (growthById.get(channel.id) ?? 0), 0);
 
   const snapshot = {
     timestamp: new Date().toISOString(),
-    subscriberShare: percentShare(shownSubscriberTotal, allSubscriberTotal),
-    growthShare: percentShare(shownGrowthTotal, allGrowthTotal),
-    totalSubscribers: shownSubscriberTotal,
-    totalGrowth: shownGrowthTotal,
+    subscriberShare: percentShare(totalSubscribers, eligibleSubscriberTotal),
+    growthShare: percentShare(totalGrowth, eligibleGrowthTotal),
+    totalSubscribers,
+    totalGrowth,
     channelSubscribers: shownChannels.map(({ id, name, subscribers }) => ({ channelId: id, channelName: name, value: subscribers })),
-    channelGrowth: shownChannels.map(({ id, name }) => ({
-      channelId: id,
-      channelName: name,
-      value: growthById.get(id) ?? 0
-    }))
+    channelGrowth: shownChannels.map(({ id, name }) => ({ channelId: id, channelName: name, value: growthById.get(id) ?? 0 }))
   };
 
   const history = readHistory();
