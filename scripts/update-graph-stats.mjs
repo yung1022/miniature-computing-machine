@@ -11,9 +11,7 @@ const STATS_URL = 'https://fyscs1-private-canada5493.tnstats.dev/public/s9_data'
 const GROWTH_URL = 'https://public-database.tnstats.dev/s1_growth';
 
 function firstValue(object, keys) {
-  for (const key of keys) {
-    if (object && object[key] !== undefined && object[key] !== null) return object[key];
-  }
+  for (const key of keys) if (object && object[key] !== undefined && object[key] !== null) return object[key];
   return undefined;
 }
 
@@ -75,26 +73,32 @@ async function main() {
   const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
   const configuredIds = new Set(Array.isArray(config.channelIds) ? config.channelIds.map(String) : []);
   const excludedIds = new Set(Array.isArray(config.excludedChannelIds) ? config.excludedChannelIds.map(String) : []);
+
   const [statsPayload, growthPayload] = await Promise.all([fetchJson(STATS_URL), fetchJson(GROWTH_URL)]);
   const allChannels = extractList(statsPayload, 'channel stats').map(normalizeChannel).filter(Boolean);
   const growthById = buildGrowthMap(extractList(growthPayload, 'growth'));
 
-  // Excluded channels are omitted from graph data and all aggregate calculations.
-  const eligibleChannels = allChannels.filter((channel) => !excludedIds.has(channel.id));
-  const shownChannels = eligibleChannels.filter((channel) => configuredIds.size === 0 || configuredIds.has(channel.id));
+  // The full-feed denominators include excluded channels. Exclusions only affect
+  // the configured/visible subset, its totals, and the graph series.
+  const configuredChannels = allChannels.filter((channel) => configuredIds.size === 0 || configuredIds.has(channel.id));
+  const shownChannels = configuredChannels.filter((channel) => !excludedIds.has(channel.id));
+  const excludedChannels = configuredChannels.filter((channel) => excludedIds.has(channel.id));
+  const fullSubscriberTotal = allChannels.reduce((total, channel) => total + channel.subscribers, 0);
+  const fullGrowthTotal = allChannels.reduce((total, channel) => total + (growthById.get(channel.id) ?? 0), 0);
   const totalSubscribers = shownChannels.reduce((total, channel) => total + channel.subscribers, 0);
-  const eligibleSubscriberTotal = eligibleChannels.reduce((total, channel) => total + channel.subscribers, 0);
   const totalGrowth = shownChannels.reduce((total, channel) => total + (growthById.get(channel.id) ?? 0), 0);
-  const eligibleGrowthTotal = eligibleChannels.reduce((total, channel) => total + (growthById.get(channel.id) ?? 0), 0);
 
   const snapshot = {
     timestamp: new Date().toISOString(),
-    subscriberShare: percentShare(totalSubscribers, eligibleSubscriberTotal),
-    growthShare: percentShare(totalGrowth, eligibleGrowthTotal),
+    subscriberShare: percentShare(totalSubscribers, fullSubscriberTotal),
+    growthShare: percentShare(totalGrowth, fullGrowthTotal),
     totalSubscribers,
     totalGrowth,
+    fullSubscriberTotal,
+    fullGrowthTotal,
     channelSubscribers: shownChannels.map(({ id, name, subscribers }) => ({ channelId: id, channelName: name, value: subscribers })),
-    channelGrowth: shownChannels.map(({ id, name }) => ({ channelId: id, channelName: name, value: growthById.get(id) ?? 0 }))
+    channelGrowth: shownChannels.map(({ id, name }) => ({ channelId: id, channelName: name, value: growthById.get(id) ?? 0 })),
+    excludedChannels: excludedChannels.map(({ id, name, subscribers }) => ({ channelId: id, channelName: name, subscribers, growth: growthById.get(id) ?? 0 }))
   };
 
   const history = readHistory();
