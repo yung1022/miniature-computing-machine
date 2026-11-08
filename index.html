@@ -6,272 +6,103 @@
   <meta name="color-scheme" content="light dark">
   <title>Channel Stats</title>
   <style>
-    :root { color-scheme: dark; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #e6edf3; background: #0d1117; }
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; color: #e6edf3; background: #0d1117; }
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; padding: 32px 18px; }
-    main { width: min(100%, 1100px); margin: 0 auto; }
-    header { display: flex; justify-content: space-between; align-items: end; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; }
-    h1 { margin: 6px 0 0; font-size: clamp(1.8rem, 5vw, 2.5rem); }
-    h2 { margin: 0 0 12px; font-size: 1.1rem; }
-    p { color: #b1bac4; line-height: 1.55; }
-    button, a.button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 0 15px; border: 1px solid #3fb950; border-radius: 8px; background: #238636; color: white; font: inherit; font-weight: 650; text-decoration: none; cursor: pointer; }
-    button:hover, a.button:hover { background: #2ea043; }
-    button:disabled { opacity: .6; cursor: wait; }
-    .toolbar { display: flex; gap: 10px; align-items: center; }
-    .toolbar a.button { border-color: #484f58; background: #21262d; }
-    .summary { display: flex; gap: 18px; flex-wrap: wrap; margin: 18px 0; color: #8b949e; font-size: .92rem; }
-    .summary strong { color: #e6edf3; }
-    .status, .card { border: 1px solid #30363d; border-radius: 12px; background: #161b22; }
-    .status { padding: 13px 16px; color: #8b949e; }
-    .status.error { color: #ff7b72; }
-    .status.ok { color: #3fb950; }
-    .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; margin: 16px 0 24px; }
-    .card { padding: 16px; min-width: 0; }
-    .card p { margin: -5px 0 10px; color: #8b949e; font-size: .85rem; }
-    .chart-host { position: relative; }
-    .chart { width: 100%; height: 260px; display: block; overflow: visible; touch-action: pan-y; }
-    .gridline { stroke: #30363d; stroke-width: 1; }
-    .axis-label { fill: #8b949e; font: 11px system-ui, sans-serif; }
-    .series-line { fill: none; stroke-width: 2; }
-    .scrub-line { stroke: #e6edf3; stroke-opacity: .55; stroke-width: 1; stroke-dasharray: 4 3; pointer-events: none; }
-    .active-point { stroke: #fff; stroke-width: 2; pointer-events: none; }
-    .scrub-area { fill: transparent; cursor: crosshair; }
-    .chart-tooltip { position: absolute; z-index: 4; max-width: min(300px, 85%); padding: 7px 10px; border: 1px solid #6e7681; border-radius: 7px; background: #f0f6fc; color: #0d1117; font: 600 12px/1.45 system-ui, sans-serif; white-space: normal; box-shadow: 0 4px 14px #0008; transform: translate(-50%, calc(-100% - 9px)); pointer-events: none; }
-    .chart-tooltip.below { transform: translate(-50%, 9px); }
-    .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; color: #b1bac4; font-size: .8rem; }
-    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
-    .swatch { width: 11px; height: 3px; border-radius: 2px; }
-    .table-wrap { overflow-x: auto; margin: 18px 0; }
-    table { width: 100%; border-collapse: collapse; text-align: left; background: #161b22; border-radius: 12px; overflow: hidden; }
-    th, td { padding: 13px 15px; border-bottom: 1px solid #30363d; }
-    th { color: #8b949e; text-transform: uppercase; font-size: .8rem; }
-    td:last-child, th:last-child { text-align: right; }
-    .help, footer { color: #8b949e; font-size: .86rem; }
-    .help { margin: 18px 0; }
-    footer { margin-top: 18px; }
-    @media (max-width: 520px) { body { padding: 22px 12px; } .chart { height: 220px; } th, td { padding: 10px 8px; } }
+    main { width: min(100%, 1100px); margin: auto; }
+    header { display:flex; justify-content:space-between; align-items:end; gap:18px; flex-wrap:wrap; margin-bottom:24px; }
+    h1 { margin:6px 0 0; font-size:clamp(1.8rem,5vw,2.5rem); }
+    h2 { margin:0 0 12px; font-size:1.1rem; }
+    p { color:#b1bac4; line-height:1.55; }
+    button,a.button { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:0 15px; border:1px solid #3fb950; border-radius:8px; background:#238636; color:white; font:inherit; font-weight:650; text-decoration:none; cursor:pointer; }
+    button:disabled { opacity:.6; cursor:wait; }
+    .toolbar { display:flex; gap:10px; }
+    .toolbar a.button { border-color:#484f58; background:#21262d; }
+    .summary { display:flex; gap:18px; flex-wrap:wrap; margin:18px 0; color:#8b949e; font-size:.92rem; }
+    .summary strong { color:#e6edf3; }
+    .status,.card { border:1px solid #30363d; border-radius:12px; background:#161b22; }
+    .status { padding:13px 16px; color:#8b949e; }
+    .status.error { color:#ff7b72; }
+    .status.ok { color:#3fb950; }
+    .charts { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr)); gap:16px; margin:16px 0 24px; }
+    .card { padding:16px; min-width:0; }
+    .card p { margin:-5px 0 10px; color:#8b949e; font-size:.85rem; }
+    .chart { width:100%; height:260px; display:block; }
+    .gridline { stroke:#30363d; stroke-width:1; }
+    .axis-label { fill:#8b949e; font:11px system-ui,sans-serif; }
+    .series-line { fill:none; stroke-width:2; }
+    .legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:8px; color:#b1bac4; font-size:.8rem; }
+    .legend-item { display:inline-flex; align-items:center; gap:6px; }
+    .swatch { width:11px; height:3px; border-radius:2px; }
+    .table-wrap { overflow-x:auto; margin:18px 0; }
+    table { width:100%; border-collapse:collapse; text-align:left; background:#161b22; border-radius:12px; overflow:hidden; }
+    th,td { padding:13px 15px; border-bottom:1px solid #30363d; }
+    th { color:#8b949e; text-transform:uppercase; font-size:.8rem; }
+    td:last-child,th:last-child { text-align:right; }
+    .help,footer { color:#8b949e; font-size:.86rem; }
+    .help { margin:18px 0; }
+    @media(max-width:520px) { body { padding:22px 12px; } .chart { height:220px; } th,td { padding:10px 8px; } }
   </style>
 </head>
 <body>
-  <main>
-    <header>
-      <div><div class="eyebrow">Live data</div><h1>Channel statistics</h1><p>Subscriber counts, growth, and historical graph snapshots.</p></div>
-      <div class="toolbar"><button id="refresh" type="button">Refresh</button><a class="button" href="https://github.com/yung1022/miniature-computing-machine">Repository</a></div>
-    </header>
-    <div class="summary" aria-live="polite">
-      <span>Channels shown: <strong id="count">—</strong></span>
-      <span>Subscriber share: <strong id="subscriber-share">—</strong></span>
-      <span>Growth share: <strong id="growth-share">—</strong></span>
-      <span>Updated: <strong id="updated">—</strong></span>
+<main>
+  <header>
+    <div><div>Live data</div><h1>Channel statistics</h1><p>Subscriber counts, growth, and historical graph snapshots.</p></div>
+    <div class="toolbar"><button id="refresh" type="button">Refresh</button><a class="button" href="https://github.com/yung1022/miniature-computing-machine">Repository</a></div>
+  </header>
+  <div class="summary" aria-live="polite">
+    <span>Channels shown: <strong id="count">—</strong></span>
+    <span>Subscriber share: <strong id="subscriber-share">—</strong></span>
+    <span>Growth share: <strong id="growth-share">—</strong></span>
+    <span>Updated: <strong id="updated">—</strong></span>
+  </div>
+  <section aria-label="Historical graph statistics">
+    <h2>Graph stats</h2><div id="chart-status" class="status" role="status">Loading graph history…</div>
+    <div class="charts">
+      <article class="card"><h2>Subscriber share</h2><p>Shown channels' share of all feed subscribers</p><div id="chart-subscriber-share"></div></article>
+      <article class="card"><h2>Growth share</h2><p>Shown channels' share of all feed growth</p><div id="chart-growth-share"></div></article>
+      <article class="card"><h2>Total subscribers</h2><p>Combined subscribers for shown channels</p><div id="chart-total-subscribers"></div></article>
+      <article class="card"><h2>Subscribers by channel</h2><p>Shown channel series</p><div id="chart-channel-subscribers"></div><div id="legend-channel-subscribers" class="legend"></div></article>
+      <article class="card"><h2>Total growth</h2><p>Combined average growth for shown channels</p><div id="chart-total-growth"></div></article>
+      <article class="card"><h2>Global growth</h2><p>Estimated all-feed growth, derived from shown total growth and its share</p><div id="chart-global-growth"></div></article>
+      <article class="card"><h2>Growth by channel</h2><p>Shown channel series</p><div id="chart-channel-growth"></div><div id="legend-channel-growth" class="legend"></div></article>
     </div>
+  </section>
+  <div id="status" class="status" role="status">Loading channel statistics…</div>
+  <h2>Shown channels</h2>
+  <div class="table-wrap"><table><thead><tr><th>Channel</th><th>Channel ID</th><th>Subscribers (rank)</th><th>Average growth</th></tr></thead><tbody id="rows"></tbody></table></div>
+  <h2>Excluded channels</h2>
+  <div class="table-wrap"><table><thead><tr><th>Channel</th><th>Channel ID</th><th>Subscribers</th><th>Average growth</th></tr></thead><tbody id="excluded-rows"></tbody></table></div>
+  <p class="help">Configure included IDs with <code>channelIds</code> and excluded IDs with <code>excludedChannelIds</code> in <code>channels.json</code>. Excluded channels stay in the full-feed share denominators and appear in the separate list, but are omitted from shown totals and graphs.</p>
+  <footer>Data sources: subscriber and growth public feeds; historical snapshots from <code>data/graph-stats.json</code>.</footer>
+</main>
+<script>
+"use strict";
+const DATA_URL="https://fyscs1-private-canada5493.tnstats.dev/public/s9_data";
+const GROWTH_URL="https://public-database.tnstats.dev/s1_growth";
+const CONFIG_URL="./channels.json";
+const HISTORY_URL="./data/graph-stats.json";
+const REFRESH_MS=30000;
+const COLORS=["#58a6ff","#3fb950","#f0883e","#bc8cff","#ff7b72","#39c5cf","#d2a8ff","#e3b341","#f778ba","#7ee787","#ffa657","#8b949e"];
+const $=id=>document.getElementById(id);
+let history=[];
+let loading=false;
+function firstValue(obj,keys){for(const key of keys)if(obj&&obj[key]!==undefined&&obj[key]!==null)return obj[key];}
+function number(value){const n=typeof value==="string"?Number(value.replaceAll(",","")):Number(value);return Number.isFinite(n)?n:0;}
+function fmt(value){return new Intl.NumberFormat().format(number(value));}
+function setStatus(el,text,kind=""){el.textContent=text;el.className=`status${kind?` ${kind}`:""}`;}
+function extractList(payload,kind){if(Array.isArray(payload))return payload;if(!payload||typeof payload!=="object")throw new Error(`Unexpected ${kind} response format.`);const keys=kind==="channels"?["channels","data","results","items","list"]:["data","results","growth","items","list"];for(const key of keys){if(Array.isArray(payload[key]))return payload[key];if(payload[key]&&typeof payload[key]==="object")for(const nested of keys)if(Array.isArray(payload[key][nested]))return payload[key][nested];}throw new Error(`Could not find ${kind} list.`);}
+function channelId(item){return String(item.channelId??item.cid??item.id??item.channelName??"unknown");}
+function populateTable(target,channels,growthMap,rankMap,ranked){target.replaceChildren();if(!channels.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=4;td.textContent="No channels in this list.";tr.append(td);target.append(tr);return;}for(const c of channels){const tr=document.createElement("tr");const values=ranked?[c.name,c.id,`${fmt(c.subscribers)} (#${rankMap.get(c.id)??"—"})`,growthMap.has(c.id)?fmt(growthMap.get(c.id)):"—"]:[c.name,c.id,fmt(c.subscribers),growthMap.has(c.id)?fmt(growthMap.get(c.id)):"—"];for(const value of values){const td=document.createElement("td");td.textContent=value;tr.append(td);}target.append(tr);}}
 
-    <section aria-label="Historical graph statistics">
-      <h2>Graph stats</h2>
-      <div id="chart-status" class="status" role="status">Loading graph history…</div>
-      <div class="charts">
-        <article class="card"><h2>Subscriber share</h2><p>Visible channels' share of all subscribers</p><div id="chart-subscriber-share" class="chart-host"></div></article>
-        <article class="card"><h2>Growth share</h2><p>Visible channels' share of total growth</p><div id="chart-growth-share" class="chart-host"></div></article>
-        <article class="card"><h2>Total subscribers</h2><p>Combined subscribers for channels shown</p><div id="chart-total-subscribers" class="chart-host"></div></article>
-        <article class="card"><h2>Subscribers by channel</h2><p>All channel series share this graph area</p><div id="chart-channel-subscribers" class="chart-host"></div><div id="legend-channel-subscribers" class="legend"></div></article>
-        <article class="card"><h2>Total growth</h2><p>Combined average growth for channels shown</p><div id="chart-total-growth" class="chart-host"></div></article>
-        <article class="card"><h2>Global growth</h2><p>Estimated total growth across all channels (derived from total growth ÷ growth share)</p><div id="chart-global-growth" class="chart-host"></div></article>
-        <article class="card"><h2>Growth by channel</h2><p>All channel growth series share this graph area</p><div id="chart-channel-growth" class="chart-host"></div><div id="legend-channel-growth" class="legend"></div></article>
-      </div>
-    </section>
+function renderChart(targetId,series,percent=false){const target=$(targetId);const width=Math.max(300,target.clientWidth||420),height=260,left=66,right=12,top=14,bottom=38,pw=width-left-right,ph=height-top-bottom;const vals=series.flatMap(s=>s.values.map(p=>p.value).filter(Number.isFinite));if(!history.length||!vals.length){target.innerHTML='<div class="status">No graph snapshots yet.</div>';return;}let min=Math.min(...vals),max=Math.max(...vals);if(min===max){const pad=Math.abs(min)*.05||1;min-=pad;max+=pad;}const x=i=>left+(history.length<=1?pw/2:i/(history.length-1)*pw),y=v=>top+(max-v)/(max-min)*ph;const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");svg.setAttribute("viewBox",`0 0 ${width} ${height}`);svg.setAttribute("class","chart");svg.setAttribute("role","img");svg.setAttribute("aria-label","Historical graph");const add=(tag,attrs)=>{const el=document.createElementNS("http://www.w3.org/2000/svg",tag);for(const[k,v]of Object.entries(attrs))el.setAttribute(k,v);svg.append(el);return el;};const axis=v=>percent?`${v.toLocaleString(undefined,{maximumFractionDigits:3})}%`:new Intl.NumberFormat(undefined,{notation:"compact",maximumFractionDigits:2}).format(v);for(let t=0;t<=4;t++){const v=min+(max-min)*t/4,yy=y(v);add("line",{x1:left,y1:yy,x2:width-right,y2:yy,class:"gridline"});const label=add("text",{x:left-8,y:yy+4,"text-anchor":"end",class:"axis-label"});label.textContent=axis(v);}for(const i of [...new Set([0,Math.floor((history.length-1)/2),history.length-1])]){const d=new Date(history[i].timestamp),label=Number.isNaN(d.getTime())?String(i+1):d.toLocaleDateString(undefined,{month:"short",day:"numeric"});const text=add("text",{x:x(i),y:height-12,"text-anchor":"middle",class:"axis-label"});text.textContent=label;}series.forEach((s,si)=>{const color=s.color||COLORS[si%COLORS.length];let d="",drawing=false;s.values.forEach((p,i)=>{if(!Number.isFinite(p.value)){drawing=false;return;}d+=`${drawing?" L":"M"}${x(i)},${y(p.value)}`;drawing=true;});add("path",{d,class:"series-line",stroke:color});});target.replaceChildren(svg);}
+function groupedSeries(key,targetId,legendId){const ids=new Map();for(const snap of history)for(const item of(Array.isArray(snap[key])?snap[key]:[])){const id=channelId(item);if(!ids.has(id))ids.set(id,item.channelName||id);}const entries=[...ids].map(([id,name],si)=>({id,name,color:COLORS[si%COLORS.length],values:history.map(snap=>{const found=(Array.isArray(snap[key])?snap[key]:[]).find(item=>channelId(item)===id);return{value:found?number(found.value??found.subscribers??found.growth):NaN};})}));const legend=$(legendId);legend.replaceChildren();for(const s of entries){const item=document.createElement("span");item.className="legend-item";const swatch=document.createElement("i");swatch.className="swatch";swatch.style.background=s.color;const label=document.createElement("span");label.textContent=s.name;item.append(swatch,label);legend.append(item);}renderChart(targetId,entries);}
+function snapshotValue(snapshot,key){return Number(snapshot[key]);}
+function renderCharts(){const scalar=(key,id,label,color,percent=false)=>renderChart(id,[{name:label,color,values:history.map(s=>({value:snapshotValue(s,key)}))}],percent);scalar("subscriberShare","chart-subscriber-share","Subscriber share",COLORS[0],true);scalar("growthShare","chart-growth-share","Growth share",COLORS[1],true);scalar("totalSubscribers","chart-total-subscribers","Total subscribers",COLORS[2]);scalar("totalGrowth","chart-total-growth","Total growth",COLORS[3]);renderChart("chart-global-growth",[{name:"Global growth",color:COLORS[4],values:history.map(s=>{const share=Number(s.growthShare),total=Number(s.totalGrowth);return{value:Number.isFinite(share)&&share!==0&&Number.isFinite(total)?total/(share/100):NaN};})}]);groupedSeries("channelSubscribers","chart-channel-subscribers","legend-channel-subscribers");groupedSeries("channelGrowth","chart-channel-growth","legend-channel-growth");}
 
-    <div id="status" class="status" role="status">Loading channel statistics…</div>
-    <div class="table-wrap"><table><thead><tr><th>Channel</th><th>Channel ID</th><th>Subscribers (rank)</th><th>Average growth</th></tr></thead><tbody id="rows"></tbody></table></div>
-    <p class="help">To filter the feed, edit <code>channels.json</code> and add channel IDs to its <code>channelIds</code> array. An empty array shows all channels.</p>
-    <footer>Data sources: subscriber and growth public feeds; historical snapshots from <code>data/graph-stats.json</code>.</footer>
-  </main>
-
-  <script>
-    "use strict";
-    const DATA_URL = "https://fyscs1-private-canada5493.tnstats.dev/public/s9_data";
-    const GROWTH_URL = "https://public-database.tnstats.dev/s1_growth";
-    const CONFIG_URL = "./channels.json";
-    const HISTORY_URL = "./data/graph-stats.json";
-    const REFRESH_MS = 30_000;
-    const COLORS = ["#58a6ff", "#3fb950", "#f0883e", "#bc8cff", "#ff7b72", "#39c5cf", "#d2a8ff", "#e3b341", "#f778ba", "#7ee787", "#ffa657", "#8b949e"];
-    const rows = document.getElementById("rows");
-    const statusEl = document.getElementById("status");
-    const chartStatus = document.getElementById("chart-status");
-    const countEl = document.getElementById("count");
-    const subscriberShareEl = document.getElementById("subscriber-share");
-    const growthShareEl = document.getElementById("growth-share");
-    const updatedEl = document.getElementById("updated");
-    const refreshButton = document.getElementById("refresh");
-    let history = [];
-    let loading = false;
-
-    function firstValue(obj, keys) { for (const key of keys) if (obj && obj[key] !== undefined && obj[key] !== null) return obj[key]; }
-    function extractList(payload, kind) {
-      if (Array.isArray(payload)) return payload;
-      if (!payload || typeof payload !== "object") throw new Error(`Unexpected ${kind} response format.`);
-      const keys = kind === "channels" ? ["channels", "data", "results", "items", "list"] : ["data", "results", "growth", "items", "list"];
-      for (const key of keys) {
-        if (Array.isArray(payload[key])) return payload[key];
-        if (payload[key] && typeof payload[key] === "object") for (const nested of keys) if (Array.isArray(payload[key][nested])) return payload[key][nested];
-      }
-      throw new Error(`Could not find ${kind} list.`);
-    }
-    function number(value) { const n = typeof value === "string" ? Number(value.replaceAll(",", "")) : Number(value); return Number.isFinite(n) ? n : 0; }
-    function fmt(value) { return new Intl.NumberFormat().format(number(value)); }
-    function setStatus(el, text, kind = "") { el.textContent = text; el.className = `status${kind ? ` ${kind}` : ""}`; }
-    function pointText(value, percent) { return percent ? `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 })}%` : new Intl.NumberFormat().format(value); }
-
-    function chartSvg(targetId, series, options = {}) {
-      const target = document.getElementById(targetId);
-      const width = Math.max(300, target.clientWidth || 420), height = 260;
-      const left = 66, right = 12, top = 14, bottom = 38;
-      const plotW = width - left - right, plotH = height - top - bottom;
-      const finiteValues = series.flatMap(s => s.values.map(p => p.value).filter(Number.isFinite));
-      if (!history.length || !finiteValues.length) { target.innerHTML = '<div class="status">No graph snapshots yet.</div>'; return; }
-      let min = Math.min(...finiteValues), max = Math.max(...finiteValues);
-      if (min === max) { const pad = Math.abs(min) * 0.05 || 1; min -= pad; max += pad; }
-      const x = i => left + (history.length <= 1 ? plotW / 2 : i / (history.length - 1) * plotW);
-      const y = v => top + (max - v) / (max - min) * plotH;
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      svg.setAttribute("viewBox", `0 0 ${width} ${height}`); svg.setAttribute("class", "chart"); svg.setAttribute("aria-label", "Drag or move across the graph to inspect snapshot values");
-      const add = (name, attrs, parent = svg) => { const node = document.createElementNS("http://www.w3.org/2000/svg", name); for (const [k,v] of Object.entries(attrs)) node.setAttribute(k, v); parent.appendChild(node); return node; };
-      const axisFmt = options.percent ? v => `${v.toLocaleString(undefined, { maximumFractionDigits: 3 })}%` : v => new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 2 }).format(v);
-      for (let t = 0; t <= 4; t++) {
-        const value = min + (max - min) * t / 4, yy = y(value);
-        add("line", { x1: left, y1: yy, x2: width - right, y2: yy, class: "gridline" });
-        const label = add("text", { x: left - 8, y: yy + 4, "text-anchor": "end", class: "axis-label" }); label.textContent = axisFmt(value);
-      }
-      const ticks = [...new Set([0, Math.floor((history.length - 1) / 2), history.length - 1])];
-      for (const i of ticks) {
-        const d = new Date(history[i].timestamp), label = Number.isNaN(d.getTime()) ? String(i + 1) : d.toLocaleString(undefined, { month: "short", day: "numeric" });
-        const text = add("text", { x: x(i), y: height - 12, "text-anchor": "middle", class: "axis-label" }); text.textContent = label;
-      }
-      series.forEach((s, si) => {
-        const color = s.color || COLORS[si % COLORS.length];
-        let d = "", drawing = false;
-        s.values.forEach((point, i) => { if (!Number.isFinite(point.value)) { drawing = false; return; } d += `${drawing ? " L" : "M"}${x(i)},${y(point.value)}`; drawing = true; });
-        add("path", { d, class: "series-line", stroke: color });
-      });
-      const cursor = add("line", { x1: x(0), y1: top, x2: x(0), y2: top + plotH, class: "scrub-line", visibility: "hidden" });
-      const activePoints = series.map(s => add("circle", { cx: x(0), cy: top, r: 5, fill: s.color, class: "active-point", visibility: "hidden" }));
-      const scrub = add("rect", { x: left, y: top, width: plotW, height: plotH, class: "scrub-area", tabindex: 0, role: "slider", "aria-label": "Slide through historical data points", "aria-valuemin": 1, "aria-valuemax": history.length, "aria-valuenow": 1 });
-      const tooltip = document.createElement("div"); tooltip.className = "chart-tooltip"; tooltip.hidden = true;
-      const selectIndex = index => {
-        const i = Math.max(0, Math.min(history.length - 1, index)), px = x(i);
-        cursor.setAttribute("x1", px); cursor.setAttribute("x2", px); cursor.setAttribute("visibility", "visible");
-        let topY = height;
-        const lines = [];
-        series.forEach((s, si) => {
-          const point = s.values[i], marker = activePoints[si];
-          if (!point || !Number.isFinite(point.value)) { marker.setAttribute("visibility", "hidden"); return; }
-          const py = y(point.value); topY = Math.min(topY, py);
-          marker.setAttribute("cx", px); marker.setAttribute("cy", py); marker.setAttribute("fill", s.color || COLORS[si % COLORS.length]); marker.setAttribute("visibility", "visible");
-          lines.push({ name: s.name, value: pointText(point.value, options.percent) });
-        });
-        tooltip.replaceChildren();
-        for (const entry of lines) { const line = document.createElement("div"); line.textContent = series.length > 1 ? `${entry.name}: ${entry.value}` : entry.value; tooltip.appendChild(line); }
-        tooltip.hidden = lines.length === 0;
-        tooltip.classList.toggle("below", topY < 60);
-        tooltip.style.left = `${Math.max(4, Math.min(target.clientWidth - 4, px / width * target.clientWidth))}px`;
-        tooltip.style.top = `${topY}px`;
-        scrub.setAttribute("aria-valuenow", String(i + 1));
-        scrub.setAttribute("aria-valuetext", lines.map(entry => `${entry.name}: ${entry.value}`).join(", "));
-      };
-      const indexFromPointer = event => {
-        const point = svg.createSVGPoint(); point.x = event.clientX; point.y = event.clientY;
-        const local = point.matrixTransform(svg.getScreenCTM().inverse());
-        selectIndex(Math.round(Math.max(0, Math.min(1, (local.x - left) / plotW)) * (history.length - 1)));
-      };
-      scrub.addEventListener("pointerdown", event => { scrub.setPointerCapture(event.pointerId); indexFromPointer(event); });
-      scrub.addEventListener("pointermove", event => { if (event.pointerType === "touch" && !scrub.hasPointerCapture(event.pointerId)) return; indexFromPointer(event); });
-      scrub.addEventListener("pointerup", event => { if (scrub.hasPointerCapture(event.pointerId)) scrub.releasePointerCapture(event.pointerId); });
-      scrub.addEventListener("pointerleave", event => { if (event.pointerType !== "touch" && !scrub.hasPointerCapture(event.pointerId)) { tooltip.hidden = true; cursor.setAttribute("visibility", "hidden"); activePoints.forEach(point => point.setAttribute("visibility", "hidden")); } });
-      scrub.addEventListener("keydown", event => {
-        if (event.key === "ArrowRight" || event.key === "ArrowUp") { event.preventDefault(); selectIndex(Number(scrub.getAttribute("aria-valuenow"))); }
-        else if (event.key === "ArrowLeft" || event.key === "ArrowDown") { event.preventDefault(); selectIndex(Number(scrub.getAttribute("aria-valuenow")) - 2); }
-      });
-      target.replaceChildren(svg, tooltip);
-    }
-
-    function scalarSeries(key, chartId, name, color, options = {}) {
-      chartSvg(chartId, [{ name, color, values: history.map(s => ({ value: Number(s[key]) })) }], options);
-    }
-    function groupedSeries(key, targetId, legendId) {
-      const byId = new Map();
-      for (const snap of history) for (const item of (Array.isArray(snap[key]) ? snap[key] : [])) {
-        const id = String(item.channelId ?? item.cid ?? item.id ?? item.channelName ?? "unknown");
-        if (!byId.has(id)) byId.set(id, { name: item.channelName || id });
-      }
-      const series = [...byId].map(([id, entry], si) => ({
-        name: entry.name, color: COLORS[si % COLORS.length],
-        values: history.map(snap => {
-          const list = Array.isArray(snap[key]) ? snap[key] : [];
-          const found = list.find(item => String(item.channelId ?? item.cid ?? item.id ?? item.channelName ?? "unknown") === id);
-          return { value: found ? number(found.value ?? found.subscribers ?? found.growth) : NaN };
-        })
-      }));
-      const legend = document.getElementById(legendId); legend.replaceChildren();
-      for (const s of series) { const item = document.createElement("span"); item.className = "legend-item"; const swatch = document.createElement("i"); swatch.className = "swatch"; swatch.style.background = s.color; const name = document.createElement("span"); name.textContent = s.name; item.append(swatch, name); legend.append(item); }
-      chartSvg(targetId, series);
-    }
-    function renderCharts() {
-      scalarSeries("subscriberShare", "chart-subscriber-share", "Subscriber share", COLORS[0], { percent: true });
-      scalarSeries("growthShare", "chart-growth-share", "Growth share", COLORS[1], { percent: true });
-      scalarSeries("totalSubscribers", "chart-total-subscribers", "Total subscribers", COLORS[2]);
-      scalarSeries("totalGrowth", "chart-total-growth", "Total growth", COLORS[3]);
-      // growthShare is stored as a percentage, so divide by 100 to recover the fraction before calculating the global total.
-      chartSvg("chart-global-growth", [{ name: "Global growth", color: COLORS[4], values: history.map(snapshot => {
-        const share = Number(snapshot.growthShare), total = Number(snapshot.totalGrowth);
-        return { value: Number.isFinite(share) && share !== 0 && Number.isFinite(total) ? total / (share / 100) : NaN };
-      }) }]);
-      groupedSeries("channelSubscribers", "chart-channel-subscribers", "legend-channel-subscribers");
-      groupedSeries("channelGrowth", "chart-channel-growth", "legend-channel-growth");
-    }
-    async function refreshHistory() {
-      try {
-        const response = await fetch(`${HISTORY_URL}?_=${Date.now()}`, { cache: "no-store" });
-        if (!response.ok) throw new Error(`Graph history returned HTTP ${response.status}.`);
-        const loaded = await response.json();
-        history = Array.isArray(loaded) ? loaded : [];
-        renderCharts();
-        setStatus(chartStatus, `Loaded ${history.length} snapshot${history.length === 1 ? "" : "s"}. Slide or move across a graph to inspect values.`, "ok");
-      } catch (error) { setStatus(chartStatus, error.message, "error"); }
-    }
-
-    async function loadStats() {
-      if (loading) return;
-      loading = true; refreshButton.disabled = true;
-      setStatus(statusEl, "Loading channel statistics…");
-      try {
-        const [statsRes, growthRes, configRes] = await Promise.all([fetch(DATA_URL, { cache: "no-store" }), fetch(GROWTH_URL, { cache: "no-store" }), fetch(CONFIG_URL, { cache: "no-store" })]);
-        if (!statsRes.ok || !growthRes.ok || !configRes.ok) throw new Error("A stats, growth, or channel configuration request failed.");
-        const [stats, growth, config] = await Promise.all([statsRes.json(), growthRes.json(), configRes.json()]);
-        const channels = extractList(stats, "channels").map(item => {
-          const id = firstValue(item, ["cid", "channelId", "channel_id", "channelID", "id"]);
-          if (id == null) return null;
-          return { id: String(id), name: String(firstValue(item, ["cname", "channelName", "channel_name", "name", "title", "channel"]) ?? id), subscribers: firstValue(item, ["subscriberCountRealAPI", "subscribers", "subscriberCount", "subscriber_count", "subscribers_count", "count"]) ?? 0 };
-        }).filter(Boolean);
-        const growthMap = new Map();
-        for (const item of extractList(growth, "growth")) { if (item?.cid == null) continue; const max = Number(item.subGainMax), min = Number(item.subGainMin); if (Number.isFinite(max) && Number.isFinite(min)) growthMap.set(String(item.cid), (max + min) / 2); }
-        const allowed = new Set(Array.isArray(config.channelIds) ? config.channelIds.map(String) : []);
-        const sorted = [...channels].sort((a,b) => number(b.subscribers) - number(a.subscribers));
-        const ranks = new Map(sorted.map((c,i) => [c.id, i + 1]));
-        const shown = channels.filter(c => allowed.size === 0 || allowed.has(c.id));
-        rows.replaceChildren();
-        for (const c of shown) { const tr = document.createElement("tr"); for (const value of [c.name, c.id, `${fmt(c.subscribers)} (#${ranks.get(c.id)})`, growthMap.has(c.id) ? fmt(growthMap.get(c.id)) : "—"]) { const td = document.createElement("td"); td.textContent = value; tr.append(td); } rows.append(tr); }
-        const allSubs = channels.reduce((sum,c) => sum + number(c.subscribers),0), shownSubs = shown.reduce((sum,c) => sum + number(c.subscribers),0);
-        const allGrowth = channels.reduce((sum,c) => sum + (growthMap.get(c.id) ?? 0),0), shownGrowth = shown.reduce((sum,c) => sum + (growthMap.get(c.id) ?? 0),0);
-        countEl.textContent = fmt(shown.length);
-        subscriberShareEl.textContent = `${(allSubs ? shownSubs / allSubs * 100 : 0).toLocaleString(undefined,{maximumFractionDigits:6})}%`;
-        growthShareEl.textContent = `${(allGrowth ? shownGrowth / allGrowth * 100 : 0).toLocaleString(undefined,{maximumFractionDigits:6})}%`;
-        updatedEl.textContent = new Date().toLocaleTimeString();
-        setStatus(statusEl, `Loaded ${shown.length} channel${shown.length === 1 ? "" : "s"}.`, "ok");
-      } catch (error) { setStatus(statusEl, error.message, "error"); }
-      finally { loading = false; refreshButton.disabled = false; }
-    }
-    refreshButton.addEventListener("click", () => { loadStats(); refreshHistory(); });
-    window.addEventListener("resize", renderCharts);
-    loadStats(); refreshHistory();
-    setInterval(() => { loadStats(); refreshHistory(); }, REFRESH_MS);
-  </script>
+async function refreshHistory(){try{const response=await fetch(`${HISTORY_URL}?_=${Date.now()}`,{cache:"no-store"});if(!response.ok)throw new Error(`Graph history returned HTTP ${response.status}.`);const loaded=await response.json();history=Array.isArray(loaded)?loaded:[];renderCharts();setStatus($("chart-status"),`Loaded ${history.length} snapshot${history.length===1?"":"s"}.`,"ok");}catch(error){setStatus($("chart-status"),error.message,"error");}}
+async function loadStats(){if(loading)return;loading=true;$("refresh").disabled=true;setStatus($("status"),"Loading channel statistics…");try{const responses=await Promise.all([fetch(DATA_URL,{cache:"no-store"}),fetch(GROWTH_URL,{cache:"no-store"}),fetch(CONFIG_URL,{cache:"no-store"})]);if(responses.some(r=>!r.ok))throw new Error("A stats, growth, or channel configuration request failed.");const[stats,growth,config]=await Promise.all(responses.map(r=>r.json()));const channels=extractList(stats,"channels").map(item=>{const id=firstValue(item,["cid","channelId","channel_id","channelID","id"]);if(id==null)return null;return{id:String(id),name:String(firstValue(item,["cname","channelName","channel_name","name","title","channel"])??id),subscribers:firstValue(item,["subscriberCountRealAPI","subscribers","subscriberCount","subscriber_count","subscribers_count","count"])??0};}).filter(Boolean);const growthMap=new Map();for(const item of extractList(growth,"growth")){if(item?.cid==null)continue;const max=Number(item.subGainMax),min=Number(item.subGainMin);if(Number.isFinite(max)&&Number.isFinite(min))growthMap.set(String(item.cid),(max+min)/2);}const included=new Set(Array.isArray(config.channelIds)?config.channelIds.map(String):[]),excludedIds=new Set(Array.isArray(config.excludedChannelIds)?config.excludedChannelIds.map(String):[]);const configured=channels.filter(c=>included.size===0||included.has(c.id));const shown=configured.filter(c=>!excludedIds.has(c.id));const excluded=configured.filter(c=>excludedIds.has(c.id));const ranks=new Map([...channels].sort((a,b)=>number(b.subscribers)-number(a.subscribers)).map((c,i)=>[c.id,i+1]));populateTable($("rows"),shown,growthMap,ranks,true);populateTable($("excluded-rows"),excluded,growthMap,ranks,false);const allSubs=channels.reduce((sum,c)=>sum+number(c.subscribers),0),shownSubs=shown.reduce((sum,c)=>sum+number(c.subscribers),0),allGrowth=channels.reduce((sum,c)=>sum+(growthMap.get(c.id)??0),0),shownGrowth=shown.reduce((sum,c)=>sum+(growthMap.get(c.id)??0),0);$("count").textContent=fmt(shown.length);$("subscriber-share").textContent=`${(allSubs?shownSubs/allSubs*100:0).toLocaleString(undefined,{maximumFractionDigits:6})}%`;$("growth-share").textContent=`${(allGrowth?shownGrowth/allGrowth*100:0).toLocaleString(undefined,{maximumFractionDigits:6})}%`;$("updated").textContent=new Date().toLocaleTimeString();setStatus($("status"),`Loaded ${shown.length} shown channel${shown.length===1?"":"s"} and ${excluded.length} excluded channel${excluded.length===1?"":"s"}.`,"ok");}catch(error){setStatus($("status"),error.message,"error");}finally{loading=false;$("refresh").disabled=false;}}
+$("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});window.addEventListener("resize",renderCharts);loadStats();refreshHistory();setInterval(()=>{loadStats();refreshHistory();},REFRESH_MS);
+</script>
 </body>
 </html>
