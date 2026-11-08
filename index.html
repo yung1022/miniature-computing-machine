@@ -45,7 +45,7 @@
       <div>
         <div class="eyebrow">Live data</div>
         <h1>Channel statistics</h1>
-        <p>Channel subscriber counts from the public stats feed.</p>
+        <p>Channel subscriber counts and growth from public stats feeds.</p>
       </div>
       <div class="toolbar">
         <button id="refresh" type="button">Refresh</button>
@@ -55,7 +55,8 @@
 
     <div class="summary" aria-live="polite">
       <span>Channels shown: <strong id="count">—</strong></span>
-      <span>Combined share: <strong id="combined-share">—</strong></span>
+      <span>Subscriber share: <strong id="subscriber-share">—</strong></span>
+      <span>Growth share: <strong id="growth-share">—</strong></span>
       <span>Updated: <strong id="updated">—</strong></span>
     </div>
 
@@ -63,7 +64,7 @@
       <div id="status" class="status" role="status">Loading channel statistics…</div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Channel</th><th>Channel ID</th><th>Subscribers (rank)</th></tr></thead>
+          <thead><tr><th>Channel</th><th>Channel ID</th><th>Subscribers (rank)</th><th>Average growth</th></tr></thead>
           <tbody id="rows"></tbody>
         </table>
         <div id="empty" class="empty" hidden>No matching channels found.</div>
@@ -73,19 +74,21 @@
     <aside class="help">
       To filter the feed, edit <code>channels.json</code> in the repository and add channel IDs to its <code>channelIds</code> array, for example <code>["channel-id-1", "channel-id-2"]</code>. An empty array shows all channels in the feed. Values are matched as strings.
     </aside>
-    <footer>Data source: <code>https://fyscs1-private-canada5493.tnstats.dev/public/s9_data</code></footer>
+    <footer>Data source: <code>https://fyscs1-private-canada5493.tnstats.dev/public/s9_data</code> and <code>https://public-database.tnstats.dev/s1_growth</code></footer>
   </main>
 
   <script>
     "use strict";
     const DATA_URL = "https://fyscs1-private-canada5493.tnstats.dev/public/s9_data";
+    const GROWTH_URL = "https://public-database.tnstats.dev/s1_growth";
     const CONFIG_URL = "./channels.json";
     const REFRESH_INTERVAL_MS = 30_000;
     const rows = document.getElementById("rows");
     const statusEl = document.getElementById("status");
     const emptyEl = document.getElementById("empty");
     const countEl = document.getElementById("count");
-    const shareEl = document.getElementById("combined-share");
+    const subscriberShareEl = document.getElementById("subscriber-share");
+    const growthShareEl = document.getElementById("growth-share");
     const updatedEl = document.getElementById("updated");
     const refreshButton = document.getElementById("refresh");
     let loading = false;
@@ -124,7 +127,34 @@
       };
     }
 
-    function toSubscriberNumber(value) {
+    function extractGrowthRecord(payload) {
+      if (Array.isArray(payload)) return payload[0] || null;
+      if (!payload || typeof payload !== "object") return null;
+      if (payload.subGainMax !== undefined || payload.SubGainMin !== undefined) return payload;
+      for (const key of ["data", "result", "growth", "item"]) {
+        const value = payload[key];
+        if (Array.isArray(value)) return value[0] || null;
+        if (value && typeof value === "object") return value;
+      }
+      return null;
+    }
+
+    async function fetchChannelGrowth(channelId) {
+      const url = new URL(GROWTH_URL);
+      url.searchParams.set("cid", channelId);
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) throw new Error(`Growth endpoint returned HTTP ${response.status} for channel ${channelId}.`);
+      const record = extractGrowthRecord(await response.json());
+      if (!record) throw new Error(`No growth data found for channel ${channelId}.`);
+      const max = Number(record.subGainMax);
+      const min = Number(record.SubGainMin);
+      if (!Number.isFinite(max) || !Number.isFinite(min)) {
+        throw new Error(`Invalid subGainMax/SubGainMin values for channel ${channelId}.`);
+      }
+      return (max + min) / 2;
+    }
+
+    function toNumber(value) {
       const n = Number(value);
       return Number.isFinite(n) ? n : 0;
     }
@@ -136,13 +166,16 @@
 
     function buildRankMap(channels) {
       const ranked = [...channels]
-        .filter((channel) => Number.isFinite(toSubscriberNumber(channel.subscribers)))
-        .sort((a, b) => toSubscriberNumber(b.subscribers) - toSubscriberNumber(a.subscribers));
+        .filter((channel) => Number.isFinite(toNumber(channel.subscribers)))
+        .sort((a, b) => toNumber(b.subscribers) - toNumber(a.subscribers));
       const rankMap = new Map();
-      ranked.forEach((channel, index) => {
-        rankMap.set(channel.id, index + 1);
-      });
+      ranked.forEach((channel, index) => rankMap.set(channel.id, index + 1));
       return rankMap;
+    }
+
+    function formatShare(numerator, denominator) {
+      const percentage = denominator !== 0 ? (numerator / denominator) * 100 : 0;
+      return `${percentage.toLocaleString(undefined, { maximumFractionDigits: 6 })}%`;
     }
 
     function setStatus(message, kind) {
@@ -169,20 +202,29 @@
         const allowed = new Set(configuredIds);
         const fullChannels = extractChannels(payload).map(normalizeChannel).filter(Boolean);
         const fullRankMap = buildRankMap(fullChannels);
+
+        const growthValues = await Promise.all(fullChannels.map((channel) => fetchChannelGrowth(channel.id)));
+        const growthById = new Map(fullChannels.map((channel, index) => [channel.id, growthValues[index]]));
         const shownChannels = fullChannels.filter((channel) => allowed.size === 0 || allowed.has(channel.id));
 
-        const fullSubscribersTotal = fullChannels.reduce((sum, channel) => sum + toSubscriberNumber(channel.subscribers), 0);
-        const shownSubscribersTotal = shownChannels.reduce((sum, channel) => sum + toSubscriberNumber(channel.subscribers), 0);
-        const combinedShare = fullSubscribersTotal > 0 ? (shownSubscribersTotal / fullSubscribersTotal) * 100 : 0;
-        const combinedEntry = { id: "combined", name: "Combined subscribers", subscribers: shownSubscribersTotal };
-        const combinedRankMap = buildRankMap([...fullChannels, combinedEntry]);
-        const combinedRank = combinedRankMap.get("combined") || 0;
+        const fullSubscribersTotal = fullChannels.reduce((sum, channel) => sum + toNumber(channel.subscribers), 0);
+        const shownSubscribersTotal = shownChannels.reduce((sum, channel) => sum + toNumber(channel.subscribers), 0);
+        const fullGrowthTotal = growthValues.reduce((sum, growth) => sum + growth, 0);
+        const shownGrowthTotal = shownChannels.reduce((sum, channel) => sum + growthById.get(channel.id), 0);
+
+        const combinedSubscriberEntry = { id: "combined-subscribers", subscribers: shownSubscribersTotal };
+        const combinedSubscriberRank = buildRankMap([...fullChannels, combinedSubscriberEntry]).get(combinedSubscriberEntry.id) || 0;
 
         rows.replaceChildren();
         for (const channel of shownChannels) {
-          const rank = fullRankMap.get(channel.id) || 0;
           const tr = document.createElement("tr");
-          for (const text of [channel.name, channel.id, `${formatCount(channel.subscribers)} (#${rank})`]) {
+          const values = [
+            channel.name,
+            channel.id,
+            `${formatCount(channel.subscribers)} (#${fullRankMap.get(channel.id) || 0})`,
+            formatCount(growthById.get(channel.id))
+          ];
+          for (const text of values) {
             const td = document.createElement("td");
             td.textContent = text;
             tr.appendChild(td);
@@ -191,7 +233,12 @@
         }
 
         const combinedTr = document.createElement("tr");
-        for (const text of ["Combined subscribers", "combined", `${formatCount(shownSubscribersTotal)} (#${combinedRank})`]) {
+        for (const text of [
+          "Combined totals",
+          "combined",
+          `${formatCount(shownSubscribersTotal)} (#${combinedSubscriberRank})`,
+          formatCount(shownGrowthTotal)
+        ]) {
           const td = document.createElement("td");
           td.textContent = text;
           combinedTr.appendChild(td);
@@ -199,14 +246,16 @@
         rows.appendChild(combinedTr);
 
         countEl.textContent = new Intl.NumberFormat().format(shownChannels.length);
-        shareEl.textContent = `${combinedShare.toLocaleString(undefined, { maximumFractionDigits: 6 })}%`;
+        subscriberShareEl.textContent = formatShare(shownSubscribersTotal, fullSubscribersTotal);
+        growthShareEl.textContent = formatShare(shownGrowthTotal, fullGrowthTotal);
         updatedEl.textContent = new Date().toLocaleTimeString();
         emptyEl.hidden = shownChannels.length !== 0 || shownSubscribersTotal !== 0;
         setStatus(`Loaded ${shownChannels.length} channel${shownChannels.length === 1 ? "" : "s"}.`, "ok");
       } catch (error) {
         setStatus(`${error.message} If this is a CORS error, the stats server must allow this page's origin.`, "error");
         countEl.textContent = "—";
-        shareEl.textContent = "—";
+        subscriberShareEl.textContent = "—";
+        growthShareEl.textContent = "—";
         emptyEl.hidden = true;
       } finally {
         loading = false;
