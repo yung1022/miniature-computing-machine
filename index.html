@@ -36,9 +36,8 @@
     .scrub-line { stroke: #e6edf3; stroke-opacity: .55; stroke-width: 1; stroke-dasharray: 4 3; pointer-events: none; }
     .active-point { stroke: #fff; stroke-width: 2; pointer-events: none; }
     .scrub-area { fill: transparent; cursor: crosshair; }
-    .chart-tooltip { position: absolute; z-index: 4; max-width: min(280px, 85%); padding: 7px 10px; border: 1px solid #6e7681; border-radius: 7px; background: #f0f6fc; color: #0d1117; font: 600 12px/1.45 system-ui, sans-serif; white-space: normal; box-shadow: 0 4px 14px #0008; transform: translate(-50%, calc(-100% - 9px)); pointer-events: none; }
+    .chart-tooltip { position: absolute; z-index: 4; max-width: min(300px, 85%); padding: 7px 10px; border: 1px solid #6e7681; border-radius: 7px; background: #f0f6fc; color: #0d1117; font: 600 12px/1.45 system-ui, sans-serif; white-space: normal; box-shadow: 0 4px 14px #0008; transform: translate(-50%, calc(-100% - 9px)); pointer-events: none; }
     .chart-tooltip.below { transform: translate(-50%, 9px); }
-    .chart-tooltip div + div { margin-top: 2px; }
     .legend { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 8px; color: #b1bac4; font-size: .8rem; }
     .legend-item { display: inline-flex; align-items: center; gap: 6px; }
     .swatch { width: 11px; height: 3px; border-radius: 2px; }
@@ -75,6 +74,7 @@
         <article class="card"><h2>Total subscribers</h2><p>Combined subscribers for channels shown</p><div id="chart-total-subscribers" class="chart-host"></div></article>
         <article class="card"><h2>Subscribers by channel</h2><p>All channel series share this graph area</p><div id="chart-channel-subscribers" class="chart-host"></div><div id="legend-channel-subscribers" class="legend"></div></article>
         <article class="card"><h2>Total growth</h2><p>Combined average growth for channels shown</p><div id="chart-total-growth" class="chart-host"></div></article>
+        <article class="card"><h2>Global growth</h2><p>Estimated total growth across all channels (derived from total growth ÷ growth share)</p><div id="chart-global-growth" class="chart-host"></div></article>
         <article class="card"><h2>Growth by channel</h2><p>All channel growth series share this graph area</p><div id="chart-channel-growth" class="chart-host"></div><div id="legend-channel-growth" class="legend"></div></article>
       </div>
     </section>
@@ -122,7 +122,6 @@
 
     function chartSvg(targetId, series, options = {}) {
       const target = document.getElementById(targetId);
-      target.querySelectorAll(".chart-tooltip").forEach(el => el.remove());
       const width = Math.max(300, target.clientWidth || 420), height = 260;
       const left = 66, right = 12, top = 14, bottom = 38;
       const plotW = width - left - right, plotH = height - top - bottom;
@@ -155,52 +154,46 @@
       const cursor = add("line", { x1: x(0), y1: top, x2: x(0), y2: top + plotH, class: "scrub-line", visibility: "hidden" });
       const activePoints = series.map(s => add("circle", { cx: x(0), cy: top, r: 5, fill: s.color, class: "active-point", visibility: "hidden" }));
       const scrub = add("rect", { x: left, y: top, width: plotW, height: plotH, class: "scrub-area", tabindex: 0, role: "slider", "aria-label": "Slide through historical data points", "aria-valuemin": 1, "aria-valuemax": history.length, "aria-valuenow": 1 });
-      const tooltip = document.createElement("div"); tooltip.className = "chart-tooltip"; tooltip.hidden = true; target.appendChild(tooltip);
+      const tooltip = document.createElement("div"); tooltip.className = "chart-tooltip"; tooltip.hidden = true;
       const selectIndex = index => {
-        const i = Math.max(0, Math.min(history.length - 1, index));
-        const px = x(i);
+        const i = Math.max(0, Math.min(history.length - 1, index)), px = x(i);
         cursor.setAttribute("x1", px); cursor.setAttribute("x2", px); cursor.setAttribute("visibility", "visible");
         let topY = height;
-        const tooltipLines = [];
+        const lines = [];
         series.forEach((s, si) => {
           const point = s.values[i], marker = activePoints[si];
           if (!point || !Number.isFinite(point.value)) { marker.setAttribute("visibility", "hidden"); return; }
           const py = y(point.value); topY = Math.min(topY, py);
           marker.setAttribute("cx", px); marker.setAttribute("cy", py); marker.setAttribute("fill", s.color || COLORS[si % COLORS.length]); marker.setAttribute("visibility", "visible");
-          tooltipLines.push({ name: s.name, value: pointText(point.value, options.percent) });
+          lines.push({ name: s.name, value: pointText(point.value, options.percent) });
         });
         tooltip.replaceChildren();
-        for (const entry of tooltipLines) {
-          const line = document.createElement("div");
-          line.textContent = series.length > 1 ? `${entry.name}: ${entry.value}` : entry.value;
-          tooltip.appendChild(line);
-        }
-        tooltip.hidden = tooltipLines.length === 0;
+        for (const entry of lines) { const line = document.createElement("div"); line.textContent = series.length > 1 ? `${entry.name}: ${entry.value}` : entry.value; tooltip.appendChild(line); }
+        tooltip.hidden = lines.length === 0;
         tooltip.classList.toggle("below", topY < 60);
         tooltip.style.left = `${Math.max(4, Math.min(target.clientWidth - 4, px / width * target.clientWidth))}px`;
-        tooltip.style.top = `${topY / height * height}px`;
+        tooltip.style.top = `${topY}px`;
         scrub.setAttribute("aria-valuenow", String(i + 1));
-        scrub.setAttribute("aria-valuetext", tooltipLines.map(entry => `${entry.name}: ${entry.value}`).join(", "));
+        scrub.setAttribute("aria-valuetext", lines.map(entry => `${entry.name}: ${entry.value}`).join(", "));
       };
       const indexFromPointer = event => {
         const point = svg.createSVGPoint(); point.x = event.clientX; point.y = event.clientY;
         const local = point.matrixTransform(svg.getScreenCTM().inverse());
-        const fraction = Math.max(0, Math.min(1, (local.x - left) / plotW));
-        selectIndex(Math.round(fraction * (history.length - 1)));
+        selectIndex(Math.round(Math.max(0, Math.min(1, (local.x - left) / plotW)) * (history.length - 1)));
       };
       scrub.addEventListener("pointerdown", event => { scrub.setPointerCapture(event.pointerId); indexFromPointer(event); });
       scrub.addEventListener("pointermove", event => { if (event.pointerType === "touch" && !scrub.hasPointerCapture(event.pointerId)) return; indexFromPointer(event); });
       scrub.addEventListener("pointerup", event => { if (scrub.hasPointerCapture(event.pointerId)) scrub.releasePointerCapture(event.pointerId); });
       scrub.addEventListener("pointerleave", event => { if (event.pointerType !== "touch" && !scrub.hasPointerCapture(event.pointerId)) { tooltip.hidden = true; cursor.setAttribute("visibility", "hidden"); activePoints.forEach(point => point.setAttribute("visibility", "hidden")); } });
       scrub.addEventListener("keydown", event => {
-        if (event.key === "ArrowRight" || event.key === "ArrowUp") { event.preventDefault(); selectIndex(Number(scrub.getAttribute("aria-valuenow")));
-        } else if (event.key === "ArrowLeft" || event.key === "ArrowDown") { event.preventDefault(); selectIndex(Number(scrub.getAttribute("aria-valuenow")) - 2); }
+        if (event.key === "ArrowRight" || event.key === "ArrowUp") { event.preventDefault(); selectIndex(Number(scrub.getAttribute("aria-valuenow"))); }
+        else if (event.key === "ArrowLeft" || event.key === "ArrowDown") { event.preventDefault(); selectIndex(Number(scrub.getAttribute("aria-valuenow")) - 2); }
       });
       target.replaceChildren(svg, tooltip);
     }
 
-    function scalarSeries(key, chartId, name, color, percent = false) {
-      chartSvg(chartId, [{ name, color, values: history.map(s => ({ value: Number(s[key]) })) }], { percent });
+    function scalarSeries(key, chartId, name, color, options = {}) {
+      chartSvg(chartId, [{ name, color, values: history.map(s => ({ value: Number(s[key]) })) }], options);
     }
     function groupedSeries(key, targetId, legendId) {
       const byId = new Map();
@@ -221,10 +214,15 @@
       chartSvg(targetId, series);
     }
     function renderCharts() {
-      scalarSeries("subscriberShare", "chart-subscriber-share", "Subscriber share", COLORS[0], true);
-      scalarSeries("growthShare", "chart-growth-share", "Growth share", COLORS[1], true);
+      scalarSeries("subscriberShare", "chart-subscriber-share", "Subscriber share", COLORS[0], { percent: true });
+      scalarSeries("growthShare", "chart-growth-share", "Growth share", COLORS[1], { percent: true });
       scalarSeries("totalSubscribers", "chart-total-subscribers", "Total subscribers", COLORS[2]);
       scalarSeries("totalGrowth", "chart-total-growth", "Total growth", COLORS[3]);
+      // growthShare is stored as a percentage, so divide by 100 to recover the fraction before calculating the global total.
+      chartSvg("chart-global-growth", [{ name: "Global growth", color: COLORS[4], values: history.map(snapshot => {
+        const share = Number(snapshot.growthShare), total = Number(snapshot.totalGrowth);
+        return { value: Number.isFinite(share) && share !== 0 && Number.isFinite(total) ? total / (share / 100) : NaN };
+      }) }]);
       groupedSeries("channelSubscribers", "chart-channel-subscribers", "legend-channel-subscribers");
       groupedSeries("channelGrowth", "chart-channel-growth", "legend-channel-growth");
     }
