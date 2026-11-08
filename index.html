@@ -80,6 +80,7 @@
     "use strict";
     const DATA_URL = "https://fyscs1-private-canada5493.tnstats.dev/public/s9_data";
     const CONFIG_URL = "./channels.json";
+    const REFRESH_INTERVAL_MS = 30_000;
     const rows = document.getElementById("rows");
     const statusEl = document.getElementById("status");
     const emptyEl = document.getElementById("empty");
@@ -87,6 +88,7 @@
     const shareEl = document.getElementById("combined-share");
     const updatedEl = document.getElementById("updated");
     const refreshButton = document.getElementById("refresh");
+    let loading = false;
 
     function firstValue(obj, keys) {
       for (const key of keys) {
@@ -149,8 +151,9 @@
     }
 
     async function loadStats() {
+      if (loading) return;
+      loading = true;
       refreshButton.disabled = true;
-      shareEl.textContent = "Updating…";
       setStatus("Loading channel statistics…");
       emptyEl.hidden = true;
       try {
@@ -164,25 +167,14 @@
         const [payload, config] = await Promise.all([dataResponse.json(), configResponse.json()]);
         const configuredIds = Array.isArray(config.channelIds) ? config.channelIds.map(String) : [];
         const allowed = new Set(configuredIds);
-
-        const fullChannels = extractChannels(payload)
-          .map(normalizeChannel)
-          .filter(Boolean);
-
+        const fullChannels = extractChannels(payload).map(normalizeChannel).filter(Boolean);
         const fullRankMap = buildRankMap(fullChannels);
-        const shownChannels = fullChannels
-          .filter((channel) => allowed.size === 0 || allowed.has(channel.id));
+        const shownChannels = fullChannels.filter((channel) => allowed.size === 0 || allowed.has(channel.id));
 
         const fullSubscribersTotal = fullChannels.reduce((sum, channel) => sum + toSubscriberNumber(channel.subscribers), 0);
         const shownSubscribersTotal = shownChannels.reduce((sum, channel) => sum + toSubscriberNumber(channel.subscribers), 0);
         const combinedShare = fullSubscribersTotal > 0 ? (shownSubscribersTotal / fullSubscribersTotal) * 100 : 0;
-
-        const combinedEntry = {
-          id: "combined",
-          name: "Combined subscribers",
-          subscribers: shownSubscribersTotal
-        };
-
+        const combinedEntry = { id: "combined", name: "Combined subscribers", subscribers: shownSubscribersTotal };
         const combinedRankMap = buildRankMap([...fullChannels, combinedEntry]);
         const combinedRank = combinedRankMap.get("combined") || 0;
 
@@ -199,8 +191,7 @@
         }
 
         const combinedTr = document.createElement("tr");
-        const combinedText = `${formatCount(shownSubscribersTotal)} (#${combinedRank})`;
-        for (const text of ["Combined subscribers", "combined", combinedText]) {
+        for (const text of ["Combined subscribers", "combined", `${formatCount(shownSubscribersTotal)} (#${combinedRank})`]) {
           const td = document.createElement("td");
           td.textContent = text;
           combinedTr.appendChild(td);
@@ -208,7 +199,7 @@
         rows.appendChild(combinedTr);
 
         countEl.textContent = new Intl.NumberFormat().format(shownChannels.length);
-        shareEl.textContent = `${combinedShare.toLocaleString(undefined, { maximumFractionDigits: 6 })}%`;
+        shareEl.textContent = `${combinedShare.toLocaleString(undefined, { maximumFractionDigits: 3 })}%`;
         updatedEl.textContent = new Date().toLocaleTimeString();
         emptyEl.hidden = shownChannels.length !== 0 || shownSubscribersTotal !== 0;
         setStatus(`Loaded ${shownChannels.length} channel${shownChannels.length === 1 ? "" : "s"}.`, "ok");
@@ -218,12 +209,14 @@
         shareEl.textContent = "—";
         emptyEl.hidden = true;
       } finally {
+        loading = false;
         refreshButton.disabled = false;
       }
     }
 
     refreshButton.addEventListener("click", loadStats);
     loadStats();
+    setInterval(loadStats, REFRESH_INTERVAL_MS);
   </script>
 </body>
 </html>
