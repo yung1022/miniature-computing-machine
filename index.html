@@ -55,6 +55,7 @@
 
     <div class="summary" aria-live="polite">
       <span>Channels shown: <strong id="count">—</strong></span>
+      <span>Combined share: <strong id="combined-share">—</strong></span>
       <span>Updated: <strong id="updated">—</strong></span>
     </div>
 
@@ -83,6 +84,7 @@
     const statusEl = document.getElementById("status");
     const emptyEl = document.getElementById("empty");
     const countEl = document.getElementById("count");
+    const shareEl = document.getElementById("combined-share");
     const updatedEl = document.getElementById("updated");
     const refreshButton = document.getElementById("refresh");
 
@@ -120,6 +122,11 @@
       };
     }
 
+    function toSubscriberNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+
     function formatCount(value) {
       const n = Number(value);
       return value !== "" && Number.isFinite(n) ? new Intl.NumberFormat().format(n) : String(value);
@@ -144,15 +151,19 @@
         const [payload, config] = await Promise.all([dataResponse.json(), configResponse.json()]);
         const configuredIds = Array.isArray(config.channelIds) ? config.channelIds.map(String) : [];
         const allowed = new Set(configuredIds);
-        const rankedChannels = extractChannels(payload)
+        const fullChannels = extractChannels(payload)
           .map(normalizeChannel)
-          .filter(Boolean)
-          .map((channel, index) => ({ channel, rank: index + 1 }));
-        const channels = rankedChannels
-          .filter(({ channel }) => allowed.size === 0 || allowed.has(channel.id));
+          .filter(Boolean);
+        const rankedChannels = fullChannels.map((channel, index) => ({ channel, rank: index + 1 }));
+        const shownChannels = rankedChannels.filter(({ channel }) => allowed.size === 0 || allowed.has(channel.id));
+
+        const fullSubscribersTotal = fullChannels.reduce((sum, channel) => sum + toSubscriberNumber(channel.subscribers), 0);
+        const shownSubscribersTotal = shownChannels.reduce((sum, { channel }) => sum + toSubscriberNumber(channel.subscribers), 0);
+        const combinedShare = fullSubscribersTotal > 0 ? (shownSubscribersTotal / fullSubscribersTotal) * 100 : 0;
+        const combinedRank = fullChannels.length + 1;
 
         rows.replaceChildren();
-        for (const { channel, rank } of channels) {
+        for (const { channel, rank } of shownChannels) {
           const tr = document.createElement("tr");
           for (const text of [channel.name, channel.id, `${formatCount(channel.subscribers)} (#${rank})`]) {
             const td = document.createElement("td");
@@ -161,13 +172,25 @@
           }
           rows.appendChild(tr);
         }
-        countEl.textContent = new Intl.NumberFormat().format(channels.length);
+
+        const combinedTr = document.createElement("tr");
+        const combinedText = `${formatCount(shownSubscribersTotal)} (#${combinedRank})`;
+        for (const text of ["Combined subscribers", "combined", combinedText]) {
+          const td = document.createElement("td");
+          td.textContent = text;
+          combinedTr.appendChild(td);
+        }
+        rows.appendChild(combinedTr);
+
+        countEl.textContent = new Intl.NumberFormat().format(shownChannels.length);
+        shareEl.textContent = `${combinedShare.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`;
         updatedEl.textContent = new Date().toLocaleTimeString();
-        emptyEl.hidden = channels.length !== 0;
-        setStatus(`Loaded ${channels.length} channel${channels.length === 1 ? "" : "s"}.`, "ok");
+        emptyEl.hidden = shownChannels.length !== 0 || shownSubscribersTotal !== 0;
+        setStatus(`Loaded ${shownChannels.length} channel${shownChannels.length === 1 ? "" : "s"}.`, "ok");
       } catch (error) {
         setStatus(`${error.message} If this is a CORS error, the stats server must allow this page's origin.`, "error");
         countEl.textContent = "—";
+        shareEl.textContent = "—";
         emptyEl.hidden = true;
       } finally {
         refreshButton.disabled = false;
