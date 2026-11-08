@@ -7,7 +7,7 @@
   const INTERVAL_COLLAB_MS = 301000;  // How often Collab runs (e.g., every 1 second)
   
   // Target channel IDs array (Add as many IDs as you want here)
-  const TARGET_CHANNEL_IDS = ["UCjrii0S-8k6sfc_ds3V-mRg","UCHGCm5vwMUmfT6KnsCQY6Aw","UC7xekFOa6e9C4zReMA7485w","UCNQsjFMCytyH81nEpNN2YtQ","UCXlRi76oMC8T4vlVB2FYjsw","UCe76be8EuemfxZT4DSzYBZA","UCt6KDg7ftGLz-ftgvH2DtwA","UCXYnf-nl_sStB8nMbwWNNYg"];
+  const TARGET_CHANNEL_IDS = ["UCjrii0S-8k6sfc_ds3V-mRg","UCHGCm5vwMUmfT6KnsCQY6Aw","UC7xekFOa6e9C4zReMA7485w","UCNQsjFMCytyH81nEpNN2YtQ","UCXlRi76oMC8T4vlVB2FYjsw","UCe76be8EuemfxZT4DSzYBZA","UCt6KDg7ftGLz-ftgvH2DtwA","UCXYnf-nl_sStB8nMbwWNNYg","UCoif5spcZemcWy1XTFSRumg"];
   // =========================================================
 
   function extractConst(name, scriptsText) {
