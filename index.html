@@ -132,6 +132,17 @@
       return value !== "" && Number.isFinite(n) ? new Intl.NumberFormat().format(n) : String(value);
     }
 
+    function buildRankMap(channels) {
+      const ranked = [...channels]
+        .filter((channel) => Number.isFinite(toSubscriberNumber(channel.subscribers)))
+        .sort((a, b) => toSubscriberNumber(b.subscribers) - toSubscriberNumber(a.subscribers));
+      const rankMap = new Map();
+      ranked.forEach((channel, index) => {
+        rankMap.set(channel.id, index + 1);
+      });
+      return rankMap;
+    }
+
     function setStatus(message, kind) {
       statusEl.textContent = message;
       statusEl.className = `status${kind ? ` ${kind}` : ""}`;
@@ -148,22 +159,35 @@
         ]);
         if (!dataResponse.ok) throw new Error(`Stats endpoint returned HTTP ${dataResponse.status}.`);
         if (!configResponse.ok) throw new Error(`Could not load channels.json (HTTP ${configResponse.status}).`);
+
         const [payload, config] = await Promise.all([dataResponse.json(), configResponse.json()]);
         const configuredIds = Array.isArray(config.channelIds) ? config.channelIds.map(String) : [];
         const allowed = new Set(configuredIds);
+
         const fullChannels = extractChannels(payload)
           .map(normalizeChannel)
           .filter(Boolean);
-        const rankedChannels = fullChannels.map((channel, index) => ({ channel, rank: index + 1 }));
-        const shownChannels = rankedChannels.filter(({ channel }) => allowed.size === 0 || allowed.has(channel.id));
+
+        const fullRankMap = buildRankMap(fullChannels);
+        const shownChannels = fullChannels
+          .filter((channel) => allowed.size === 0 || allowed.has(channel.id));
 
         const fullSubscribersTotal = fullChannels.reduce((sum, channel) => sum + toSubscriberNumber(channel.subscribers), 0);
-        const shownSubscribersTotal = shownChannels.reduce((sum, { channel }) => sum + toSubscriberNumber(channel.subscribers), 0);
+        const shownSubscribersTotal = shownChannels.reduce((sum, channel) => sum + toSubscriberNumber(channel.subscribers), 0);
         const combinedShare = fullSubscribersTotal > 0 ? (shownSubscribersTotal / fullSubscribersTotal) * 100 : 0;
-        const combinedRank = fullChannels.length + 1;
+
+        const combinedEntry = {
+          id: "combined",
+          name: "Combined subscribers",
+          subscribers: shownSubscribersTotal
+        };
+
+        const combinedRankMap = buildRankMap([...fullChannels, combinedEntry]);
+        const combinedRank = combinedRankMap.get("combined") || 0;
 
         rows.replaceChildren();
-        for (const { channel, rank } of shownChannels) {
+        for (const channel of shownChannels) {
+          const rank = fullRankMap.get(channel.id) || 0;
           const tr = document.createElement("tr");
           for (const text of [channel.name, channel.id, `${formatCount(channel.subscribers)} (#${rank})`]) {
             const td = document.createElement("td");
