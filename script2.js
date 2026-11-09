@@ -2,9 +2,9 @@
   const START_DELAY_MS = 300;
   
   // === CONFIGURABLE INTERVALS (in milliseconds) & SETTINGS ===
-  const INTERVAL_ITEM19_MS = 5050;   // How often Item 19 runs
-  const INTERVAL_BOOST_MS = 151500;   // How often Boost runs (e.g., every 2 seconds)
-  const INTERVAL_COLLAB_MS = 303000;  // How often Collab runs (e.g., every 1 second)
+  const INTERVAL_ITEM19_MS = 5100;   // How often Item 19 runs
+  const INTERVAL_BOOST_MS = 150450;   // How often Boost runs (e.g., every 2 seconds)
+  const INTERVAL_COLLAB_MS = 300900;  // How often Collab runs (e.g., every 1 second)
   
   // Target channel IDs array (Add as many IDs as you want here)
   const TARGET_CHANNEL_IDS = ["UCjrii0S-8k6sfc_ds3V-mRg","UCHGCm5vwMUmfT6KnsCQY6Aw","UC7xekFOa6e9C4zReMA7485w","UCNQsjFMCytyH81nEpNN2YtQ","UCXlRi76oMC8T4vlVB2FYjsw","UCe76be8EuemfxZT4DSzYBZA","UCt6KDg7ftGLz-ftgvH2DtwA","UCXYnf-nl_sStB8nMbwWNNYg","UCoif5spcZemcWy1XTFSRumg"];
