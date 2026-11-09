@@ -20,6 +20,9 @@
     .toolbar a.button { border-color:#484f58; background:#21262d; }
     .summary { display:flex; gap:18px; flex-wrap:wrap; margin:18px 0; color:#8b949e; font-size:.92rem; }
     .summary strong { color:#e6edf3; }
+    .summary .odometer { display:inline-flex; align-items:baseline; gap:7px; }
+    .summary .odometer strong { color:#7ee787; font-variant-numeric:tabular-nums; }
+    .summary .odometer small { color:#8b949e; font-size:.78rem; }
     .status,.card { border:1px solid #30363d; border-radius:12px; background:#161b22; }
     .status { padding:13px 16px; color:#8b949e; }
     .status.error { color:#ff7b72; }
@@ -68,6 +71,7 @@
   </header>
   <div class="summary" aria-live="polite">
     <span>Channels shown: <strong id="count">—</strong></span>
+    <span class="odometer" aria-live="off">Total subscribers: <strong id="subscriber-odometer">—</strong><small id="odometer-status">Waiting for live data</small></span>
     <span>Subscriber share: <strong id="subscriber-share">—</strong></span>
     <span>Growth share: <strong id="growth-share">—</strong></span>
     <span>Updated: <strong id="updated">—</strong></span>
@@ -136,6 +140,69 @@ $("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});windo
   const previousRenderCharts = window.renderCharts;
   window.removeEventListener("resize", previousRenderCharts);
   let selectedRange = "all";
+  let odometerBase = NaN;
+  let odometerAnchor = 0;
+  let odometerRefresh = "";
+  let odometerRate = 0;
+  const liveSubscriberSamples = [];
+  const ODOMETER_REFRESH_MS = 3000;
+  const ODOMETER_MAX_AGE_MS = 45000;
+
+  const recentSubscriberRate = () => {
+    const points = history
+      .map(snapshot => ({ timestamp: Date.parse(snapshot.timestamp), value: Number(snapshot.totalSubscribers) }))
+      .filter(point => Number.isFinite(point.timestamp) && Number.isFinite(point.value));
+    if (points.length < 3) return 0;
+    const newest = points.reduce((latest, point) => Math.max(latest, point.timestamp), -Infinity);
+    if (newest > Date.now() + 60000 || Date.now() - newest > 15 * 60 * 1000) return 0;
+    const recent = points.filter(point => point.timestamp >= newest - 6 * 60 * 60 * 1000).sort((a, b) => a.timestamp - b.timestamp);
+    if (recent.length < 3 || recent.at(-1).timestamp - recent[0].timestamp < 30 * 60 * 1000) return 0;
+    const origin = recent[0].timestamp;
+    const hours = recent.map(point => (point.timestamp - origin) / 3600000);
+    const meanHours = hours.reduce((sum, value) => sum + value, 0) / hours.length;
+    const meanValue = recent.reduce((sum, point) => sum + point.value, 0) / recent.length;
+    const variance = hours.reduce((sum, value) => sum + (value - meanHours) ** 2, 0);
+    const covariance = recent.reduce((sum, point, index) => sum + (hours[index] - meanHours) * (point.value - meanValue), 0);
+    return variance ? covariance / variance / 3600 : 0;
+  };
+
+  const observedSubscriberRate = () => {
+    if (liveSubscriberSamples.length < 2) return null;
+    const newest = liveSubscriberSamples.at(-1).timestamp;
+    const recent = liveSubscriberSamples.filter(sample => sample.timestamp >= newest - 5 * 60 * 1000);
+    const rates = [];
+    for (let index = 1; index < recent.length; index++) {
+      const elapsed = (recent[index].timestamp - recent[index - 1].timestamp) / 1000;
+      if (elapsed < 15 || elapsed > 3 * REFRESH_MS / 1000) continue;
+      rates.push((recent[index].value - recent[index - 1].value) / elapsed);
+    }
+    return rates.length ? median(rates) : null;
+  };
+
+  const updateSubscriberOdometer = () => {
+    const refresh = $("updated").textContent;
+    const rows = [...$("rows").rows];
+    const total = rows.reduce((sum, row) => {
+      if (row.cells.length < 4) return sum;
+      const value = Number(row.cells[2].textContent.split(" (#")[0].replace(/\D/g, ""));
+      return Number.isFinite(value) ? sum + value : sum;
+    }, 0);
+    if (refresh !== "—" && refresh !== odometerRefresh && rows.length) {
+      odometerBase = total;
+      odometerAnchor = Date.now();
+      odometerRefresh = refresh;
+      liveSubscriberSamples.push({ timestamp: odometerAnchor, value: total });
+      if (liveSubscriberSamples.length > 12) liveSubscriberSamples.shift();
+      odometerRate = observedSubscriberRate() ?? recentSubscriberRate();
+    }
+    if (!Number.isFinite(odometerBase)) return;
+    const elapsed = Math.max(0, Date.now() - odometerAnchor);
+    const estimatedElapsed = Math.min(elapsed, ODOMETER_MAX_AGE_MS);
+    $("subscriber-odometer").textContent = new Intl.NumberFormat().format(Math.max(0, Math.floor(odometerBase + odometerRate * estimatedElapsed / 1000)));
+    $("odometer-status").textContent = elapsed > ODOMETER_MAX_AGE_MS
+      ? "Awaiting live refresh"
+      : odometerRate !== 0 ? "Estimated · live refresh every 30 sec" : "Estimate unavailable · live refresh every 30 sec";
+  };
 
   const pointText = (value, percent) => percent
     ? `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 })}%`
@@ -478,6 +545,8 @@ $("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});windo
   });
   window.addEventListener("resize", window.renderCharts);
   window.renderCharts();
+  updateSubscriberOdometer();
+  window.setInterval(updateSubscriberOdometer, ODOMETER_REFRESH_MS);
 })();
 </script>
 </body>
