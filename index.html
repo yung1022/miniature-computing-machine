@@ -131,8 +131,68 @@ function snapshotValue(snapshot,key){return Number(snapshot[key]);}
 function renderCharts(){const scalar=(key,id,label,color,percent=false)=>renderChart(id,[{name:label,color,values:history.map(s=>({value:snapshotValue(s,key)}))}],percent);scalar("subscriberShare","chart-subscriber-share","Subscriber share",COLORS[0],true);scalar("growthShare","chart-growth-share","Growth share",COLORS[1],true);scalar("totalSubscribers","chart-total-subscribers","Total subscribers",COLORS[2]);scalar("totalGrowth","chart-total-growth","Total growth",COLORS[3]);renderChart("chart-global-growth",[{name:"Global growth",color:COLORS[4],values:history.map(s=>{const share=Number(s.growthShare),total=Number(s.totalGrowth);return{value:Number.isFinite(share)&&share!==0&&Number.isFinite(total)?total/(share/100):NaN};})}]);groupedSeries("channelSubscribers","chart-channel-subscribers","legend-channel-subscribers");groupedSeries("channelGrowth","chart-channel-growth","legend-channel-growth");}
 
 async function refreshHistory(){try{const response=await fetch(`${HISTORY_URL}?_=${Date.now()}`,{cache:"no-store"});if(!response.ok)throw new Error(`Graph history returned HTTP ${response.status}.`);const loaded=await response.json();history=Array.isArray(loaded)?loaded:[];renderCharts();setStatus($("chart-status"),`Loaded ${history.length} snapshot${history.length===1?"":"s"}.`,"ok");}catch(error){setStatus($("chart-status"),error.message,"error");}}
-async function loadStats(){if(loading)return;loading=true;$("refresh").disabled=true;setStatus($("status"),"Loading channel statistics…");try{const responses=await Promise.all([fetch(DATA_URL,{cache:"no-store"}),fetch(GROWTH_URL,{cache:"no-store"}),fetch(CONFIG_URL,{cache:"no-store"})]);if(responses.some(r=>!r.ok))throw new Error("A stats, growth, or channel configuration request failed.");const[stats,growth,config]=await Promise.all(responses.map(r=>r.json()));const channels=extractList(stats,"channels").map(item=>{const id=firstValue(item,["cid","channelId","channel_id","channelID","id"]);if(id==null)return null;return{id:String(id),name:String(firstValue(item,["cname","channelName","channel_name","name","title","channel"])??id),subscribers:firstValue(item,["subscriberCountRealAPI","subscribers","subscriberCount","subscriber_count","subscribers_count","count"])??0};}).filter(Boolean);const growthMap=new Map();for(const item of extractList(growth,"growth")){if(item?.cid==null)continue;const max=Number(item.subGainMax),min=Number(item.subGainMin);if(Number.isFinite(max)&&Number.isFinite(min))growthMap.set(String(item.cid),(max+min)/2);}const included=new Set(Array.isArray(config.channelIds)?config.channelIds.map(String):[]),excludedIds=new Set(Array.isArray(config.excludedChannelIds)?config.excludedChannelIds.map(String):[]);const configured=channels.filter(c=>included.size===0||included.has(c.id));const shown=configured.filter(c=>!excludedIds.has(c.id));const excluded=configured.filter(c=>excludedIds.has(c.id));const ranks=new Map([...channels].sort((a,b)=>number(b.subscribers)-number(a.subscribers)).map((c,i)=>[c.id,i+1]));populateTable($("rows"),shown,growthMap,ranks,true);populateTable($("excluded-rows"),excluded,growthMap,ranks,false);const allSubs=channels.reduce((sum,c)=>sum+number(c.subscribers),0),shownSubs=shown.reduce((sum,c)=>sum+number(c.subscribers),0),allGrowth=channels.reduce((sum,c)=>sum+(growthMap.get(c.id)??0),0),shownGrowth=shown.reduce((sum,c)=>sum+(growthMap.get(c.id)??0),0);$("count").textContent=fmt(shown.length);$("subscriber-share").textContent=`${(allSubs?shownSubs/allSubs*100:0).toLocaleString(undefined,{maximumFractionDigits:6})}%`;$("growth-share").textContent=`${(allGrowth?shownGrowth/allGrowth*100:0).toLocaleString(undefined,{maximumFractionDigits:6})}%`;$("updated").textContent=new Date().toLocaleTimeString();setStatus($("status"),`Loaded ${shown.length} shown channel${shown.length===1?"":"s"} and ${excluded.length} excluded channel${excluded.length===1?"":"s"}.`,"ok");}catch(error){setStatus($("status"),error.message,"error");}finally{loading=false;$("refresh").disabled=false;}}
-$("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});window.addEventListener("resize",renderCharts);loadStats();refreshHistory();setInterval(()=>{loadStats();refreshHistory();},REFRESH_MS);
+async function loadStats() {
+  if (loading) return;
+  loading = true;
+  $("refresh").disabled = true;
+  setStatus($("status"), "Loading channel statistics…");
+  try {
+    const responses = await Promise.all([
+      fetch(DATA_URL, { cache: "no-store" }),
+      fetch(GROWTH_URL, { cache: "no-store" }),
+      fetch(CONFIG_URL, { cache: "no-store" })
+    ]);
+    if (responses.some(response => !response.ok)) throw new Error("A stats, growth, or channel configuration request failed.");
+    const [stats, growth, config] = await Promise.all(responses.map(response => response.json()));
+    const channels = extractList(stats, "channels").map(item => {
+      const id = firstValue(item, ["cid", "channelId", "channel_id", "channelID", "id"]);
+      if (id == null) return null;
+      return {
+        id: String(id),
+        name: String(firstValue(item, ["cname", "channelName", "channel_name", "name", "title", "channel"]) ?? id),
+        subscribers: firstValue(item, ["subscriberCountRealAPI", "subscribers", "subscriberCount", "subscriber_count", "subscribers_count", "count"]) ?? 0
+      };
+    }).filter(Boolean);
+    const growthMap = new Map();
+    for (const item of extractList(growth, "growth")) {
+      if (item?.cid == null) continue;
+      const value = Number(item.subGainMax);
+      if (Number.isFinite(value)) growthMap.set(String(item.cid), value);
+    }
+    const included = new Set(Array.isArray(config.channelIds) ? config.channelIds.map(String) : []);
+    const excludedIds = new Set(Array.isArray(config.excludedChannelIds) ? config.excludedChannelIds.map(String) : []);
+    const configured = channels.filter(channel => included.size === 0 || included.has(channel.id));
+    const shown = configured.filter(channel => !excludedIds.has(channel.id));
+    const excluded = configured.filter(channel => excludedIds.has(channel.id));
+    const ranks = new Map([...channels]
+      .sort((a, b) => number(b.subscribers) - number(a.subscribers))
+      .map((channel, index) => [channel.id, index + 1]));
+
+    populateTable($("rows"), shown, growthMap, ranks, true);
+    populateTable($("excluded-rows"), excluded, growthMap, ranks, false);
+
+    const allSubscribers = channels.reduce((sum, channel) => sum + number(channel.subscribers), 0);
+    const shownSubscribers = shown.reduce((sum, channel) => sum + number(channel.subscribers), 0);
+    const allGrowth = channels.reduce((sum, channel) => sum + (growthMap.get(channel.id) ?? 0), 0);
+    const shownGrowth = shown.reduce((sum, channel) => sum + (growthMap.get(channel.id) ?? 0), 0);
+    $("count").textContent = fmt(shown.length);
+    $("subscriber-share").textContent = `${(allSubscribers ? shownSubscribers / allSubscribers * 100 : 0).toLocaleString(undefined, { maximumFractionDigits: 6 })}%`;
+    $("growth-share").textContent = `${(allGrowth ? shownGrowth / allGrowth * 100 : 0).toLocaleString(undefined, { maximumFractionDigits: 6 })}%`;
+    $("updated").textContent = new Date().toLocaleTimeString();
+    setStatus($("status"), `Loaded ${shown.length} shown channel${shown.length === 1 ? "" : "s"} and ${excluded.length} excluded channel${excluded.length === 1 ? "" : "s"}.`, "ok");
+  } catch (error) {
+    setStatus($("status"), error.message, "error");
+  } finally {
+    loading = false;
+    $("refresh").disabled = false;
+  }
+}
+
+$("refresh").addEventListener("click", () => { loadStats(); refreshHistory(); });
+window.addEventListener("resize", renderCharts);
+loadStats();
+refreshHistory();
+setInterval(() => { loadStats(); refreshHistory(); }, REFRESH_MS);
 </script>
 <script>
 "use strict";
