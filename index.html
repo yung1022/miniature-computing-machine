@@ -31,6 +31,16 @@
     .gridline { stroke:#30363d; stroke-width:1; }
     .axis-label { fill:#8b949e; font:11px system-ui,sans-serif; }
     .series-line { fill:none; stroke-width:2; }
+    .series-line.dashed { stroke-dasharray:6 4; }
+    article.card > div[id^="chart-"] { position:relative; }
+    .scrub-line { stroke:#e6edf3; stroke-opacity:.55; stroke-width:1; stroke-dasharray:4 3; pointer-events:none; }
+    .active-point { stroke:#fff; stroke-width:2; pointer-events:none; }
+    .scrub-area { fill:transparent; cursor:crosshair; touch-action:pan-y; }
+    .chart-tooltip { position:absolute; z-index:4; max-width:min(300px,85%); padding:7px 10px; border:1px solid #6e7681; border-radius:7px; background:#f0f6fc; color:#0d1117; font:600 12px/1.45 system-ui,sans-serif; white-space:normal; box-shadow:0 4px 14px #0008; transform:translate(-50%,calc(-100% - 9px)); pointer-events:none; }
+    .chart-tooltip.below { transform:translate(-50%,9px); }
+    .chart-legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin:4px 0 0; color:#b1bac4; font-size:.8rem; }
+    .chart-legend .swatch { flex:none; }
+    .chart-legend .swatch.dashed { height:0; border-top:2px dashed currentColor; border-radius:0; }
     .legend { display:flex; flex-wrap:wrap; gap:8px 14px; margin-top:8px; color:#b1bac4; font-size:.8rem; }
     .legend-item { display:inline-flex; align-items:center; gap:6px; }
     .swatch { width:11px; height:3px; border-radius:2px; }
@@ -103,6 +113,230 @@ function renderCharts(){const scalar=(key,id,label,color,percent=false)=>renderC
 async function refreshHistory(){try{const response=await fetch(`${HISTORY_URL}?_=${Date.now()}`,{cache:"no-store"});if(!response.ok)throw new Error(`Graph history returned HTTP ${response.status}.`);const loaded=await response.json();history=Array.isArray(loaded)?loaded:[];renderCharts();setStatus($("chart-status"),`Loaded ${history.length} snapshot${history.length===1?"":"s"}.`,"ok");}catch(error){setStatus($("chart-status"),error.message,"error");}}
 async function loadStats(){if(loading)return;loading=true;$("refresh").disabled=true;setStatus($("status"),"Loading channel statistics…");try{const responses=await Promise.all([fetch(DATA_URL,{cache:"no-store"}),fetch(GROWTH_URL,{cache:"no-store"}),fetch(CONFIG_URL,{cache:"no-store"})]);if(responses.some(r=>!r.ok))throw new Error("A stats, growth, or channel configuration request failed.");const[stats,growth,config]=await Promise.all(responses.map(r=>r.json()));const channels=extractList(stats,"channels").map(item=>{const id=firstValue(item,["cid","channelId","channel_id","channelID","id"]);if(id==null)return null;return{id:String(id),name:String(firstValue(item,["cname","channelName","channel_name","name","title","channel"])??id),subscribers:firstValue(item,["subscriberCountRealAPI","subscribers","subscriberCount","subscriber_count","subscribers_count","count"])??0};}).filter(Boolean);const growthMap=new Map();for(const item of extractList(growth,"growth")){if(item?.cid==null)continue;const max=Number(item.subGainMax),min=Number(item.subGainMin);if(Number.isFinite(max)&&Number.isFinite(min))growthMap.set(String(item.cid),(max+min)/2);}const included=new Set(Array.isArray(config.channelIds)?config.channelIds.map(String):[]),excludedIds=new Set(Array.isArray(config.excludedChannelIds)?config.excludedChannelIds.map(String):[]);const configured=channels.filter(c=>included.size===0||included.has(c.id));const shown=configured.filter(c=>!excludedIds.has(c.id));const excluded=configured.filter(c=>excludedIds.has(c.id));const ranks=new Map([...channels].sort((a,b)=>number(b.subscribers)-number(a.subscribers)).map((c,i)=>[c.id,i+1]));populateTable($("rows"),shown,growthMap,ranks,true);populateTable($("excluded-rows"),excluded,growthMap,ranks,false);const allSubs=channels.reduce((sum,c)=>sum+number(c.subscribers),0),shownSubs=shown.reduce((sum,c)=>sum+number(c.subscribers),0),allGrowth=channels.reduce((sum,c)=>sum+(growthMap.get(c.id)??0),0),shownGrowth=shown.reduce((sum,c)=>sum+(growthMap.get(c.id)??0),0);$("count").textContent=fmt(shown.length);$("subscriber-share").textContent=`${(allSubs?shownSubs/allSubs*100:0).toLocaleString(undefined,{maximumFractionDigits:6})}%`;$("growth-share").textContent=`${(allGrowth?shownGrowth/allGrowth*100:0).toLocaleString(undefined,{maximumFractionDigits:6})}%`;$("updated").textContent=new Date().toLocaleTimeString();setStatus($("status"),`Loaded ${shown.length} shown channel${shown.length===1?"":"s"} and ${excluded.length} excluded channel${excluded.length===1?"":"s"}.`,"ok");}catch(error){setStatus($("status"),error.message,"error");}finally{loading=false;$("refresh").disabled=false;}}
 $("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});window.addEventListener("resize",renderCharts);loadStats();refreshHistory();setInterval(()=>{loadStats();refreshHistory();},REFRESH_MS);
+</script>
+<script>
+"use strict";
+(() => {
+  const previousRenderCharts = window.renderCharts;
+  window.removeEventListener("resize", previousRenderCharts);
+
+  const pointText = (value, percent) => percent
+    ? `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 })}%`
+    : new Intl.NumberFormat().format(value);
+
+  window.renderChart = function renderChart(targetId, series, percent = false) {
+    const target = $(targetId);
+    const width = Math.max(300, target.clientWidth || 420);
+    const height = 260;
+    const left = 66, right = 12, top = 14, bottom = 38;
+    const plotWidth = width - left - right;
+    const plotHeight = height - top - bottom;
+    const values = series.flatMap(item => item.values.map(point => point.value).filter(Number.isFinite));
+    if (!history.length || !values.length) {
+      target.innerHTML = '<div class="status">No graph snapshots yet.</div>';
+      return;
+    }
+
+    let min = Math.min(...values), max = Math.max(...values);
+    if (min === max) {
+      const padding = Math.abs(min) * .05 || 1;
+      min -= padding;
+      max += padding;
+    }
+    const x = index => left + (history.length <= 1 ? plotWidth / 2 : index / (history.length - 1) * plotWidth);
+    const y = value => top + (max - value) / (max - min) * plotHeight;
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.setAttribute("class", "chart");
+    svg.setAttribute("role", "group");
+    svg.setAttribute("aria-label", "Drag or move across the graph to inspect snapshot values");
+    const add = (name, attrs) => {
+      const element = document.createElementNS("http://www.w3.org/2000/svg", name);
+      for (const [key, value] of Object.entries(attrs)) element.setAttribute(key, value);
+      svg.append(element);
+      return element;
+    };
+    const axis = value => percent
+      ? `${value.toLocaleString(undefined, { maximumFractionDigits: 3 })}%`
+      : new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 2 }).format(value);
+
+    for (let tick = 0; tick <= 4; tick++) {
+      const value = min + (max - min) * tick / 4;
+      const yy = y(value);
+      add("line", { x1: left, y1: yy, x2: width - right, y2: yy, class: "gridline" });
+      const label = add("text", { x: left - 8, y: yy + 4, "text-anchor": "end", class: "axis-label" });
+      label.textContent = axis(value);
+    }
+    for (const index of [...new Set([0, Math.floor((history.length - 1) / 2), history.length - 1])]) {
+      const date = new Date(history[index].timestamp);
+      const label = Number.isNaN(date.getTime()) ? String(index + 1) : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      const text = add("text", { x: x(index), y: height - 12, "text-anchor": "middle", class: "axis-label" });
+      text.textContent = label;
+    }
+
+    series.forEach((item, seriesIndex) => {
+      const color = item.color || COLORS[seriesIndex % COLORS.length];
+      let path = "", drawing = false;
+      item.values.forEach((point, index) => {
+        if (!Number.isFinite(point.value)) { drawing = false; return; }
+        path += `${drawing ? " L" : "M"}${x(index)},${y(point.value)}`;
+        drawing = true;
+      });
+      add("path", { d: path, class: `series-line${item.dashed ? " dashed" : ""}`, stroke: color });
+    });
+
+    const cursor = add("line", { x1: x(0), y1: top, x2: x(0), y2: top + plotHeight, class: "scrub-line", visibility: "hidden" });
+    const activePoints = series.map(item => add("circle", { cx: x(0), cy: top, r: 5, fill: item.color, class: "active-point", visibility: "hidden" }));
+    const scrub = add("rect", {
+      x: left, y: top, width: plotWidth, height: plotHeight, class: "scrub-area",
+      tabindex: 0, role: "slider", "aria-label": "Select a historical graph data point",
+      "aria-valuemin": 1, "aria-valuemax": history.length, "aria-valuenow": 1
+    });
+    const tooltip = document.createElement("div");
+    tooltip.className = "chart-tooltip";
+    tooltip.hidden = true;
+
+    const selectIndex = requestedIndex => {
+      const index = Math.max(0, Math.min(history.length - 1, requestedIndex));
+      const px = x(index);
+      cursor.setAttribute("x1", px);
+      cursor.setAttribute("x2", px);
+      cursor.setAttribute("visibility", "visible");
+      let highestPoint = height;
+      const entries = [];
+      series.forEach((item, seriesIndex) => {
+        const point = item.values[index];
+        const marker = activePoints[seriesIndex];
+        if (!point || !Number.isFinite(point.value)) {
+          marker.setAttribute("visibility", "hidden");
+          return;
+        }
+        const py = y(point.value);
+        highestPoint = Math.min(highestPoint, py);
+        marker.setAttribute("cx", px);
+        marker.setAttribute("cy", py);
+        marker.setAttribute("fill", item.color || COLORS[seriesIndex % COLORS.length]);
+        marker.setAttribute("visibility", "visible");
+        entries.push({ name: item.name, value: pointText(point.value, percent) });
+      });
+      tooltip.replaceChildren();
+      const date = new Date(history[index].timestamp);
+      const time = document.createElement("strong");
+      time.textContent = Number.isNaN(date.getTime()) ? `Snapshot ${index + 1}` : date.toLocaleString();
+      tooltip.append(time);
+      for (const entry of entries) {
+        const line = document.createElement("div");
+        line.textContent = series.length > 1 ? `${entry.name}: ${entry.value}` : entry.value;
+        tooltip.append(line);
+      }
+      tooltip.hidden = entries.length === 0;
+      tooltip.classList.toggle("below", highestPoint < 60);
+      tooltip.style.left = `${Math.max(4, Math.min(target.clientWidth - 4, px / width * target.clientWidth))}px`;
+      tooltip.style.top = `${highestPoint}px`;
+      scrub.setAttribute("aria-valuenow", String(index + 1));
+      scrub.setAttribute("aria-valuetext", `${time.textContent}; ${entries.map(entry => `${entry.name}: ${entry.value}`).join(", ")}`);
+    };
+    const indexFromPointer = event => {
+      const point = svg.createSVGPoint();
+      point.x = event.clientX;
+      point.y = event.clientY;
+      const local = point.matrixTransform(svg.getScreenCTM().inverse());
+      selectIndex(Math.round(Math.max(0, Math.min(1, (local.x - left) / plotWidth)) * (history.length - 1)));
+    };
+    scrub.addEventListener("pointerdown", event => {
+      scrub.setPointerCapture(event.pointerId);
+      indexFromPointer(event);
+    });
+    scrub.addEventListener("pointermove", event => {
+      if (event.pointerType === "touch" && !scrub.hasPointerCapture(event.pointerId)) return;
+      indexFromPointer(event);
+    });
+    scrub.addEventListener("pointerup", event => {
+      if (scrub.hasPointerCapture(event.pointerId)) scrub.releasePointerCapture(event.pointerId);
+    });
+    scrub.addEventListener("pointerleave", event => {
+      if (event.pointerType !== "touch" && !scrub.hasPointerCapture(event.pointerId)) {
+        tooltip.hidden = true;
+        cursor.setAttribute("visibility", "hidden");
+        activePoints.forEach(point => point.setAttribute("visibility", "hidden"));
+      }
+    });
+    scrub.addEventListener("keydown", event => {
+      const current = Number(scrub.getAttribute("aria-valuenow"));
+      if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+        event.preventDefault();
+        selectIndex(current);
+      } else if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+        event.preventDefault();
+        selectIndex(current - 2);
+      }
+    });
+
+    target.replaceChildren(svg, tooltip);
+    const averages = series.filter(item => item.dashed);
+    if (averages.length) {
+      const legend = document.createElement("div");
+      legend.className = "chart-legend";
+      for (const item of averages) {
+        const entry = document.createElement("span");
+        entry.className = "legend-item";
+        const swatch = document.createElement("i");
+        swatch.className = "swatch dashed";
+        swatch.style.color = item.color;
+        swatch.classList.add("dashed");
+        const label = document.createElement("span");
+        label.textContent = item.name;
+        entry.append(swatch, label);
+        legend.append(entry);
+      }
+      target.append(legend);
+    }
+  };
+
+  const averageByClockMinute = values => {
+    const totals = new Map();
+    values.forEach((point, index) => {
+      const timestamp = new Date(history[index].timestamp);
+      if (!Number.isFinite(point.value) || Number.isNaN(timestamp.getTime())) return;
+      const minute = timestamp.getHours() * 60 + timestamp.getMinutes();
+      const aggregate = totals.get(minute) || { sum: 0, count: 0 };
+      aggregate.sum += point.value;
+      aggregate.count++;
+      totals.set(minute, aggregate);
+    });
+    return values.map((point, index) => {
+      const timestamp = new Date(history[index].timestamp);
+      if (Number.isNaN(timestamp.getTime())) return { value: NaN };
+      const aggregate = totals.get(timestamp.getHours() * 60 + timestamp.getMinutes());
+      return { value: aggregate ? aggregate.sum / aggregate.count : NaN };
+    });
+  };
+
+  window.renderCharts = function renderCharts() {
+    const scalar = (key, id, label, color, percent = false) => {
+      const values = history.map(snapshot => ({ value: Number(snapshot[key]) }));
+      const lines = [{ name: label, color, values }];
+      if (key === "growthShare") lines.push({ name: "Average at this time", color: "#d2a8ff", dashed: true, values: averageByClockMinute(values) });
+      window.renderChart(id, lines, percent);
+    };
+    scalar("subscriberShare", "chart-subscriber-share", "Subscriber share", COLORS[0], true);
+    scalar("growthShare", "chart-growth-share", "Growth share", COLORS[1], true);
+    scalar("totalSubscribers", "chart-total-subscribers", "Total subscribers", COLORS[2]);
+    scalar("totalGrowth", "chart-total-growth", "Total growth", COLORS[3]);
+    const globalValues = history.map(snapshot => {
+      const share = Number(snapshot.growthShare), total = Number(snapshot.totalGrowth);
+      return { value: Number.isFinite(share) && share !== 0 && Number.isFinite(total) ? total / (share / 100) : NaN };
+    });
+    window.renderChart("chart-global-growth", [
+      { name: "Global growth", color: COLORS[4], values: globalValues },
+      { name: "Average at this time", color: "#d2a8ff", dashed: true, values: averageByClockMinute(globalValues) }
+    ]);
+    groupedSeries("channelSubscribers", "chart-channel-subscribers", "legend-channel-subscribers");
+    groupedSeries("channelGrowth", "chart-channel-growth", "legend-channel-growth");
+  };
+  window.addEventListener("resize", window.renderCharts);
+  window.renderCharts();
+})();
 </script>
 </body>
 </html>
