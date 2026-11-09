@@ -32,6 +32,9 @@
     .axis-label { fill:#8b949e; font:11px system-ui,sans-serif; }
     .series-line { fill:none; stroke-width:2; }
     .series-line.dashed { stroke-dasharray:6 4; }
+    .graph-controls { display:inline-flex; margin:0 0 14px; padding:3px; border:1px solid #484f58; border-radius:8px; background:#161b22; }
+    .graph-controls button { min-height:34px; padding:0 12px; border:0; border-radius:5px; background:transparent; color:#b1bac4; font:inherit; cursor:pointer; }
+    .graph-controls button[aria-pressed="true"] { background:#238636; color:#fff; }
     article.card > div[id^="chart-"] { position:relative; }
     .scrub-line { stroke:#e6edf3; stroke-opacity:.55; stroke-width:1; stroke-dasharray:4 3; pointer-events:none; }
     .active-point { stroke:#fff; stroke-width:2; pointer-events:none; }
@@ -67,7 +70,12 @@
     <span>Updated: <strong id="updated">—</strong></span>
   </div>
   <section aria-label="Historical graph statistics">
-    <h2>Graph stats</h2><div id="chart-status" class="status" role="status">Loading graph history…</div>
+    <h2>Graph stats</h2>
+    <div class="graph-controls" role="group" aria-label="Graph time range">
+      <button type="button" data-graph-range="all" aria-pressed="true">All time</button>
+      <button type="button" data-graph-range="day" aria-pressed="false">1 day</button>
+    </div>
+    <div id="chart-status" class="status" role="status">Loading graph history…</div>
     <div class="charts">
       <article class="card"><h2>Subscriber share</h2><p>Shown channels' share of all feed subscribers</p><div id="chart-subscriber-share"></div></article>
       <article class="card"><h2>Growth share</h2><p>Shown channels' share of all feed growth</p><div id="chart-growth-share"></div></article>
@@ -119,6 +127,7 @@ $("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});windo
 (() => {
   const previousRenderCharts = window.renderCharts;
   window.removeEventListener("resize", previousRenderCharts);
+  let selectedRange = "all";
 
   const pointText = (value, percent) => percent
     ? `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 6 })}%`
@@ -126,13 +135,14 @@ $("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});windo
 
   window.renderChart = function renderChart(targetId, series, percent = false) {
     const target = $(targetId);
+    const chartHistory = history;
     const width = Math.max(300, target.clientWidth || 420);
     const height = 260;
     const left = 66, right = 12, top = 14, bottom = 38;
     const plotWidth = width - left - right;
     const plotHeight = height - top - bottom;
     const values = series.flatMap(item => item.values.map(point => point.value).filter(Number.isFinite));
-    if (!history.length || !values.length) {
+    if (!chartHistory.length || !values.length) {
       target.innerHTML = '<div class="status">No graph snapshots yet.</div>';
       return;
     }
@@ -143,7 +153,7 @@ $("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});windo
       min -= padding;
       max += padding;
     }
-    const x = index => left + (history.length <= 1 ? plotWidth / 2 : index / (history.length - 1) * plotWidth);
+    const x = index => left + (chartHistory.length <= 1 ? plotWidth / 2 : index / (chartHistory.length - 1) * plotWidth);
     const y = value => top + (max - value) / (max - min) * plotHeight;
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
@@ -167,9 +177,11 @@ $("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});windo
       const label = add("text", { x: left - 8, y: yy + 4, "text-anchor": "end", class: "axis-label" });
       label.textContent = axis(value);
     }
-    for (const index of [...new Set([0, Math.floor((history.length - 1) / 2), history.length - 1])]) {
-      const date = new Date(history[index].timestamp);
-      const label = Number.isNaN(date.getTime()) ? String(index + 1) : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    for (const index of [...new Set([0, Math.floor((chartHistory.length - 1) / 2), chartHistory.length - 1])]) {
+      const date = new Date(chartHistory[index].timestamp);
+      const label = Number.isNaN(date.getTime()) ? String(index + 1) : selectedRange === "day"
+        ? date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
+        : date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
       const text = add("text", { x: x(index), y: height - 12, "text-anchor": "middle", class: "axis-label" });
       text.textContent = label;
     }
@@ -190,14 +202,14 @@ $("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});windo
     const scrub = add("rect", {
       x: left, y: top, width: plotWidth, height: plotHeight, class: "scrub-area",
       tabindex: 0, role: "slider", "aria-label": "Select a historical graph data point",
-      "aria-valuemin": 1, "aria-valuemax": history.length, "aria-valuenow": 1
+      "aria-valuemin": 1, "aria-valuemax": chartHistory.length, "aria-valuenow": 1
     });
     const tooltip = document.createElement("div");
     tooltip.className = "chart-tooltip";
     tooltip.hidden = true;
 
     const selectIndex = requestedIndex => {
-      const index = Math.max(0, Math.min(history.length - 1, requestedIndex));
+      const index = Math.max(0, Math.min(chartHistory.length - 1, requestedIndex));
       const px = x(index);
       cursor.setAttribute("x1", px);
       cursor.setAttribute("x2", px);
@@ -220,7 +232,7 @@ $("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});windo
         entries.push({ name: item.name, value: pointText(point.value, percent) });
       });
       tooltip.replaceChildren();
-      const date = new Date(history[index].timestamp);
+      const date = new Date(chartHistory[index].timestamp);
       const time = document.createElement("strong");
       time.textContent = Number.isNaN(date.getTime()) ? `Snapshot ${index + 1}` : date.toLocaleString();
       tooltip.append(time);
@@ -293,10 +305,10 @@ $("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});windo
     }
   };
 
-  const averageByClockMinute = values => {
+  const averageByClockMinute = (values, snapshots) => {
     const totals = new Map();
     values.forEach((point, index) => {
-      const timestamp = new Date(history[index].timestamp);
+      const timestamp = new Date(snapshots[index].timestamp);
       if (!Number.isFinite(point.value) || Number.isNaN(timestamp.getTime())) return;
       const minute = timestamp.getHours() * 60 + timestamp.getMinutes();
       const aggregate = totals.get(minute) || { sum: 0, count: 0 };
@@ -305,7 +317,7 @@ $("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});windo
       totals.set(minute, aggregate);
     });
     return values.map((point, index) => {
-      const timestamp = new Date(history[index].timestamp);
+      const timestamp = new Date(snapshots[index].timestamp);
       if (Number.isNaN(timestamp.getTime())) return { value: NaN };
       const aggregate = totals.get(timestamp.getHours() * 60 + timestamp.getMinutes());
       return { value: aggregate ? aggregate.sum / aggregate.count : NaN };
@@ -313,27 +325,47 @@ $("refresh").addEventListener("click",()=>{loadStats();refreshHistory();});windo
   };
 
   window.renderCharts = function renderCharts() {
+    const allHistory = history;
+    const newestTimestamp = Math.max(...allHistory.map(snapshot => Date.parse(snapshot.timestamp)).filter(Number.isFinite));
+    const visibleIndices = allHistory
+      .map((snapshot, index) => ({ snapshot, index, timestamp: Date.parse(snapshot.timestamp) }))
+      .filter(item => selectedRange === "all" || (Number.isFinite(item.timestamp) && item.timestamp >= newestTimestamp - 24 * 60 * 60 * 1000))
+      .map(item => item.index);
+    const selectRange = values => visibleIndices.map(index => values[index]);
+    history = visibleIndices.map(index => allHistory[index]);
+
+    try {
     const scalar = (key, id, label, color, percent = false) => {
-      const values = history.map(snapshot => ({ value: Number(snapshot[key]) }));
-      const lines = [{ name: label, color, values }];
-      if (key === "growthShare") lines.push({ name: "Average at this time", color: "#d2a8ff", dashed: true, values: averageByClockMinute(values) });
+      const allValues = allHistory.map(snapshot => ({ value: Number(snapshot[key]) }));
+      const lines = [{ name: label, color, values: selectRange(allValues) }];
+      if (key === "growthShare") lines.push({ name: "Average at this time", color: "#d2a8ff", dashed: true, values: selectRange(averageByClockMinute(allValues, allHistory)) });
       window.renderChart(id, lines, percent);
     };
     scalar("subscriberShare", "chart-subscriber-share", "Subscriber share", COLORS[0], true);
     scalar("growthShare", "chart-growth-share", "Growth share", COLORS[1], true);
     scalar("totalSubscribers", "chart-total-subscribers", "Total subscribers", COLORS[2]);
     scalar("totalGrowth", "chart-total-growth", "Total growth", COLORS[3]);
-    const globalValues = history.map(snapshot => {
+    const allGlobalValues = allHistory.map(snapshot => {
       const share = Number(snapshot.growthShare), total = Number(snapshot.totalGrowth);
       return { value: Number.isFinite(share) && share !== 0 && Number.isFinite(total) ? total / (share / 100) : NaN };
     });
     window.renderChart("chart-global-growth", [
-      { name: "Global growth", color: COLORS[4], values: globalValues },
-      { name: "Average at this time", color: "#d2a8ff", dashed: true, values: averageByClockMinute(globalValues) }
+      { name: "Global growth", color: COLORS[4], values: selectRange(allGlobalValues) },
+      { name: "Average at this time", color: "#d2a8ff", dashed: true, values: selectRange(averageByClockMinute(allGlobalValues, allHistory)) }
     ]);
     groupedSeries("channelSubscribers", "chart-channel-subscribers", "legend-channel-subscribers");
     groupedSeries("channelGrowth", "chart-channel-growth", "legend-channel-growth");
+    } finally {
+      history = allHistory;
+    }
   };
+  document.querySelectorAll("[data-graph-range]").forEach(button => {
+    button.addEventListener("click", () => {
+      selectedRange = button.dataset.graphRange;
+      document.querySelectorAll("[data-graph-range]").forEach(option => option.setAttribute("aria-pressed", String(option === button)));
+      window.renderCharts();
+    });
+  });
   window.addEventListener("resize", window.renderCharts);
   window.renderCharts();
 })();
