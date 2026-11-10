@@ -73,10 +73,41 @@
     }, 1000); // 1000ms = 1 second wait
   }
 
+  function logHttpError(source, status, url, body) {
+    let value;
+    try {
+      value = typeof body === 'string' ? body : JSON.stringify(body);
+    } catch (error) {
+      value = String(body);
+    }
+    console.error(`[http-error] ${source} HTTP ${status} ${url}\n${value ?? ''}`);
+  }
+
+  function readXhrResponse(xhr) {
+    if (xhr.responseType === 'blob' && xhr.response?.text) return xhr.response.text();
+    if (xhr.responseType === 'arraybuffer' && xhr.response) {
+      return Promise.resolve(new TextDecoder().decode(xhr.response));
+    }
+    if (xhr.responseType === 'json') return Promise.resolve(JSON.stringify(xhr.response));
+    try {
+      return Promise.resolve(xhr.responseText);
+    } catch (error) {
+      return Promise.resolve(xhr.response == null ? '' : String(xhr.response));
+    }
+  }
+
   // --- Network Interceptors for HTTP 428 ---
   const originalFetch = window.fetch;
   window.fetch = async function(...args) {
     const response = await originalFetch.apply(this, args);
+    if (response.status >= 400) {
+      const requestUrl = args[0] instanceof Request ? args[0].url : String(args[0]);
+      response.clone().text().then(body => {
+        logHttpError('fetch', response.status, requestUrl, body);
+      }).catch(error => {
+        console.error(`[http-error] fetch HTTP ${response.status} ${requestUrl}; unable to read response: ${error.message}`);
+      });
+    }
     if (response.status === 428) {
       handleGrindCheck();
     }
@@ -86,6 +117,15 @@
   const originalOpen = XMLHttpRequest.prototype.open;
   XMLHttpRequest.prototype.open = function(method, url) {
     this.addEventListener('load', function() {
+      if (this.status >= 400) {
+        const status = this.status;
+        const requestUrl = this.responseURL || String(url);
+        readXhrResponse(this).then(body => {
+          logHttpError('xhr', status, requestUrl, body);
+        }).catch(error => {
+          console.error(`[http-error] xhr HTTP ${status} ${requestUrl}; unable to read response: ${error.message}`);
+        });
+      }
       if (this.status === 428) {
         handleGrindCheck();
       }
