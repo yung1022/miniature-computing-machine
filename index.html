@@ -53,6 +53,9 @@
     .milestones { margin:24px 0; }
     .milestones p { color:#8b949e; font-size:.86rem; }
     .milestones table { font-variant-numeric:tabular-nums; }
+    .milestone-calculator { display:grid; grid-template-columns:minmax(180px,1fr) minmax(150px,.7fr) auto; gap:12px; align-items:end; margin:16px 0; }
+    .milestone-calculator label { display:grid; gap:6px; color:#b1bac4; font-size:.9rem; }
+    .milestone-calculator select,.milestone-calculator input { width:100%; min-height:42px; padding:8px 10px; border:1px solid #484f58; border-radius:6px; background:#0d1117; color:#e6edf3; font:inherit; }
     .table-wrap { overflow-x:auto; margin:18px 0; }
     table { width:100%; border-collapse:collapse; text-align:left; background:#161b22; border-radius:12px; overflow:hidden; }
     th,td { padding:13px 15px; border-bottom:1px solid #30363d; }
@@ -102,6 +105,13 @@
     <h2>Estimated milestones</h2>
     <p>Projections use 30-minute median buckets from the latest 24 hours. Unstable or declining trends are not assigned an estimated date.</p>
     <div class="table-wrap"><table><thead><tr><th>Metric</th><th>Next milestone</th><th>Estimated time</th><th>Trend fit</th></tr></thead><tbody id="milestone-rows"><tr><td colspan="4">Waiting for graph history…</td></tr></tbody></table></div>
+    <h3>Find a target time</h3>
+    <form id="milestone-calculator" class="milestone-calculator">
+      <label for="milestone-metric">Metric<select id="milestone-metric" required></select></label>
+      <label for="milestone-target">Target value<input id="milestone-target" type="number" step="any" required></label>
+      <button type="submit">Estimate time</button>
+    </form>
+    <div id="milestone-result" class="status" role="status" aria-live="polite">Choose a metric and enter a target.</div>
   </section>
   <p class="help">Configure included IDs with <code>channelIds</code> and excluded IDs with <code>excludedChannelIds</code> in <code>channels.json</code>. Excluded channels stay in the full-feed share denominators and appear in the separate list, but are omitted from shown totals and graphs.</p>
   <footer>Data sources: subscriber and growth public feeds; historical snapshots from <code>data/graph-stats.json</code>.</footer>
@@ -200,6 +210,7 @@ setInterval(() => { loadStats(); refreshHistory(); }, REFRESH_MS);
   const previousRenderCharts = window.renderCharts;
   window.removeEventListener("resize", previousRenderCharts);
   let selectedRange = "all";
+  let milestoneMetrics = [];
   let odometerBase = NaN;
   let odometerAnchor = 0;
   let odometerRefresh = "";
@@ -511,11 +522,11 @@ setInterval(() => { loadStats(); refreshHistory(); }, REFRESH_MS);
     const rows = $("milestone-rows");
     if (!snapshots.length) return;
     const metrics = [
-      { name: "Subscriber share", step: 1, format: value => `${value.toFixed(2)}%`, value: snapshot => Number(snapshot.subscriberShare) },
-      { name: "Growth share", step: 1, format: value => `${value.toFixed(2)}%`, value: snapshot => Number(snapshot.growthShare) },
-      { name: "Total subscribers", step: 1e9, format: compact, value: snapshot => Number(snapshot.totalSubscribers) },
-      { name: "Total growth", step: 1e8, format: compact, value: snapshot => Number(snapshot.totalGrowth) },
-      { name: "Global growth", step: 1e9, format: compact, value: snapshot => Number(snapshot.totalGrowth) / (Number(snapshot.growthShare) / 100) }
+      { key: "subscriberShare", name: "Subscriber share", step: 1, format: value => `${value.toFixed(2)}%`, value: snapshot => Number(snapshot.subscriberShare) },
+      { key: "growthShare", name: "Growth share", step: 1, format: value => `${value.toFixed(2)}%`, value: snapshot => Number(snapshot.growthShare) },
+      { key: "totalSubscribers", name: "Total subscribers", step: 1e9, format: compact, value: snapshot => Number(snapshot.totalSubscribers) },
+      { key: "totalGrowth", name: "Total growth", step: 1e8, format: compact, value: snapshot => Number(snapshot.totalGrowth) },
+      { key: "globalGrowth", name: "Global growth", step: 1e9, format: compact, value: snapshot => Number(snapshot.totalGrowth) / (Number(snapshot.growthShare) / 100) }
     ];
     const channelIds = new Map();
     for (const snapshot of snapshots) {
@@ -527,6 +538,7 @@ setInterval(() => { loadStats(); refreshHistory(); }, REFRESH_MS);
     for (const [id, name] of channelIds) {
       metrics.push({
         name: `${name} subscribers`,
+        key: `channelSubscribers:${id}`,
         step: 1e9,
         format: compact,
         value: snapshot => {
@@ -536,8 +548,40 @@ setInterval(() => { loadStats(); refreshHistory(); }, REFRESH_MS);
       });
     }
 
-    rows.replaceChildren();
+    const channelGrowthIds = new Map();
+    for (const snapshot of snapshots) {
+      for (const item of Array.isArray(snapshot.channelGrowth) ? snapshot.channelGrowth : []) {
+        const id = channelId(item);
+        if (!channelGrowthIds.has(id)) channelGrowthIds.set(id, item.channelName || id);
+      }
+    }
+    for (const [id, name] of channelGrowthIds) {
+      metrics.push({
+        key: `channelGrowth:${id}`,
+        name: `${name} growth`,
+        format: compact,
+        calculatorOnly: true,
+        value: snapshot => {
+          const item = (Array.isArray(snapshot.channelGrowth) ? snapshot.channelGrowth : []).find(channel => channelId(channel) === id);
+          return item ? Number(item.value ?? item.growth) : NaN;
+        }
+      });
+    }
+
+    const metricSelect = $("milestone-metric");
+    const selectedMetric = metricSelect.value;
+    metricSelect.replaceChildren();
     for (const metric of metrics) {
+      const option = document.createElement("option");
+      option.value = metric.key;
+      option.textContent = metric.name;
+      metricSelect.append(option);
+    }
+    if (metrics.some(metric => metric.key === selectedMetric)) metricSelect.value = selectedMetric;
+    milestoneMetrics = metrics;
+
+    rows.replaceChildren();
+    for (const metric of metrics.filter(item => !item.calculatorOnly)) {
       const points = snapshots.map(snapshot => ({ timestamp: Date.parse(snapshot.timestamp), value: metric.value(snapshot) }));
       const latest = points.reduce((newest, point) => Number.isFinite(point.value) && Number.isFinite(point.timestamp) && (!newest || point.timestamp > newest.timestamp) ? point : newest, null);
       const tr = document.createElement("tr");
@@ -557,6 +601,37 @@ setInterval(() => { loadStats(); refreshHistory(); }, REFRESH_MS);
       rows.append(tr);
     }
   };
+
+  $("milestone-calculator").addEventListener("submit", event => {
+    event.preventDefault();
+    const metric = milestoneMetrics.find(item => item.key === $("milestone-metric").value);
+    const target = Number($("milestone-target").value);
+    const result = $("milestone-result");
+    if (!metric || !Number.isFinite(target)) {
+      result.textContent = "Enter a valid target value.";
+      return;
+    }
+
+    const points = history.map(snapshot => ({ timestamp: Date.parse(snapshot.timestamp), value: metric.value(snapshot) }));
+    const valid = points.filter(point => Number.isFinite(point.timestamp) && Number.isFinite(point.value));
+    if (!valid.length) {
+      result.textContent = "No history is available for this metric.";
+      return;
+    }
+    const latest = valid.reduce((newest, point) => point.timestamp > newest.timestamp ? point : newest);
+    const formattedTarget = metric.format(target);
+    if (target <= latest.value) {
+      const reached = valid.filter(point => point.value >= target).sort((a, b) => a.timestamp - b.timestamp)[0];
+      const reachedAt = new Date(reached?.timestamp ?? latest.timestamp).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+      result.textContent = `${metric.name} reached ${formattedTarget} on ${reachedAt}.`;
+      return;
+    }
+
+    const estimate = estimateTrend(points, target);
+    result.textContent = estimate.date
+      ? `Estimated ${metric.name} reaches ${formattedTarget} on ${estimate.date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })} (${estimate.fit.toLowerCase()} trend fit).`
+      : `No reliable estimate for ${metric.name}: ${estimate.fit.toLowerCase()}.`;
+  });
 
   const compact = value => new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(value);
 
