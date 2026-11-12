@@ -125040,5 +125040,56 @@
         "growth": 398370811
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-12T14:20:27.084Z",
+    "subscriberShare": 1.3958028465171501,
+    "growthShare": 9.44161109572337,
+    "totalSubscribers": 40988194618,
+    "totalGrowth": 543219163,
+    "fullSubscriberTotal": 2936531811801,
+    "fullGrowthTotal": 5753458361,
+    "channelSubscribers": [
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Verstappen P21 to P2😳",
+        "value": 28167291990
+      },
+      {
+        "channelId": "UCt6KDg7ftGLz-ftgvH2DtwA",
+        "channelName": "Kimi Antonelli - CAMPIONE DEL MONDO!",
+        "value": 6484246969
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Haven is femboy",
+        "value": 6336655659
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Verstappen P21 to P2😳",
+        "value": 9945171
+      },
+      {
+        "channelId": "UCt6KDg7ftGLz-ftgvH2DtwA",
+        "channelName": "Kimi Antonelli - CAMPIONE DEL MONDO!",
+        "value": 52145496
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Haven is femboy",
+        "value": 481128496
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "FullDragonForce",
+        "subscribers": 9471651304,
+        "growth": 396061740
+      }
+    ]
   }
 ]
