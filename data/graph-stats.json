@@ -125193,5 +125193,36 @@
         "growth": 395978567
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-12T14:35:22.748Z",
+    "subscriberShare": 0.9633337511258647,
+    "growthShare": 0.1844116721726676,
+    "totalSubscribers": 28167557039,
+    "totalGrowth": 9718676,
+    "fullSubscriberTotal": 2923966590611,
+    "fullGrowthTotal": 5270098083,
+    "channelSubscribers": [
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Verstappen P21 to P2😳",
+        "value": 28167557039
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Verstappen P21 to P2😳",
+        "value": 9718676
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "FullDragonForce",
+        "subscribers": 9491649099,
+        "growth": 393241057
+      }
+    ]
   }
 ]
