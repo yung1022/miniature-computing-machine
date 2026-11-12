@@ -36,4 +36,5 @@ jobs:
         env:
           TARGET_URL: ${{ inputs.target_url }}
           LOCAL_STORAGE_JSON: ${{ inputs.local_storage_json }}
+          AUTH_PASSWORD: ${{ secrets.AUTH_PASSWORD }}
         run: npm run run
