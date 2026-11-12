@@ -74,6 +74,12 @@ async function main() {
     }
   }, localStorageData);
 
+  // --- NEW: Inject AUTH_PASSWORD securely into the browser context ---
+  await page.addInitScript((password) => {
+    window.INJECTED_AUTH_PASSWORD = password;
+  }, process.env.AUTH_PASSWORD || "");
+  // -----------------------------------------------------------------
+
   await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
   console.log("Page loaded. Evaluating scripts in the same page.");
 
