@@ -128076,5 +128076,36 @@
         "growth": 278850528
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-12T22:20:24.952Z",
+    "subscriberShare": 0.9634381825560524,
+    "growthShare": 0.06862179258594334,
+    "totalSubscribers": 28172869640,
+    "totalGrowth": 4187601,
+    "fullSubscriberTotal": 2924201069679,
+    "fullGrowthTotal": 6102436037,
+    "channelSubscribers": [
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Fuck your mother smelly vagina",
+        "value": 28172869640
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Fuck your mother smelly vagina",
+        "value": 4187601
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "FullDragonForce",
+        "subscribers": 10116170809,
+        "growth": 273119011
+      }
+    ]
   }
 ]
