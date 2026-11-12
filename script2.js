@@ -1,12 +1,15 @@
 (() => {
   const START_DELAY_MS = 300;
   
-  // === CONFIGURABLE INTERVALS (in milliseconds) & SETTINGS ===
+  // === CONFIGURABLE SETTINGS & INTERVALS (in milliseconds) ===
   const INTERVAL_ITEM19_MS = 4800;   // How often Item 19 runs
   const INTERVAL_BOOST_MS = 153600;   // How often Boost runs (e.g., every 2 seconds)
-  const INTERVAL_COLLAB_MS = 300100;  // How often Collab runs (e.g., every 1 second)
+  const INTERVAL_COLLAB_MS = 301000;  // How often Collab runs (e.g., every 1 second)
   
-  // Target channel IDs array (Add as many IDs as you want here)
+  // Configurable Auth Password for HTTP 401 handling
+  const AUTH_PASSWORD = 'YOUR_PASSWORD_HERE'; 
+
+  // Target channel IDs array for Collab command (shuffled on start and reshuffled when exhausted)
   const TARGET_CHANNEL_IDS = ["UCjrii0S-8k6sfc_ds3V-mRg","UCHGCm5vwMUmfT6KnsCQY6Aw","UC7xekFOa6e9C4zReMA7485w","UCNQsjFMCytyH81nEpNN2YtQ","UCXlRi76oMC8T4vlVB2FYjsw","UCe76be8EuemfxZT4DSzYBZA","UCt6KDg7ftGLz-ftgvH2DtwA","UCXYnf-nl_sStB8nMbwWNNYg","UCoif5spcZemcWy1XTFSRumg"];
   // =========================================================
 
@@ -83,7 +86,6 @@
   }
 
   function getNextChannelId() {
-    // If we haven't started or have used all IDs in the current cycle, reshuffle
     if (shuffledChannels.length === 0 || channelIndex >= shuffledChannels.length) {
       shuffledChannels = shuffle(TARGET_CHANNEL_IDS);
       channelIndex = 0;
@@ -136,7 +138,7 @@
     }, START_DELAY_MS);
   }
 
-  // Start Collab Loop using the shuffled channel ID sequence
+  // Start Collab Loop using the shuffled channel ID rotation
   if (collabDef) {
     window._autoGrindCollabTimeout = setTimeout(() => {
       window._autoGrindCollabInterval = setInterval(() => {
@@ -162,7 +164,92 @@
     }, START_DELAY_MS);
   }
 
-  // Unified stop function to clear all loops cleanly
+  // --- HTTP 401 Interceptor and Handler ---
+  function handleAuth401() {
+    console.log('HTTP 401 detected: Filling password and solving captcha...');
+    
+    setTimeout(() => {
+      // 1. Set auth password input
+      const passwordEl = document.getElementById('authPasswordInput') || window.authPasswordInput;
+      if (passwordEl) {
+        passwordEl.value = AUTH_PASSWORD;
+        passwordEl.dispatchEvent(new Event('input', { bubbles: true }));
+        passwordEl.dispatchEvent(new Event('change', { bubbles: true }));
+        console.log('Auth password filled.');
+      } else {
+        console.error('authPasswordInput element not found.');
+      }
+
+      // 2. Get captcha question text
+      const questionEl = document.getElementById('captchaQuestion') || window.captchaQuestion;
+      if (!questionEl) {
+        console.error('captchaQuestion element not found.');
+        return;
+      }
+      
+      const questionText = questionEl.textContent.trim();
+      console.log('Captcha question found:', questionText);
+
+      // 3. Solve arithmetic question (supports x + y or x - y)
+      const match = questionText.match(/(-?\d+)\s*([+\-])\s*(-?\d+)/);
+      if (!match) {
+        console.error('Could not parse arithmetic expression from:', questionText);
+        return;
+      }
+
+      const x = parseInt(match[1], 10);
+      const operator = match[2];
+      const y = parseInt(match[3], 10);
+      let answer = (operator === '+') ? (x + y) : (x - y);
+      console.log(`Solved captcha: ${x} ${operator} ${y} = ${answer}`);
+
+      // 4. Set captcha answer input value
+      const answerEl = document.getElementById('captchaAnswerInput') || window.captchaAnswerInput;
+      if (!answerEl) {
+        console.error('captchaAnswerInput element not found.');
+        return;
+      }
+
+      answerEl.value = answer;
+      answerEl.dispatchEvent(new Event('input', { bubbles: true }));
+      answerEl.dispatchEvent(new Event('change', { bubbles: true }));
+      console.log('Captcha answer filled.');
+
+      // 5. Automatically click submit button if available
+      setTimeout(() => {
+        const submitBtn = document.querySelector('#authBox button, #captchaBox button, form button[type="submit"], input[type="submit"]');
+        if (submitBtn) {
+          submitBtn.click();
+          console.log('Submitted authentication form.');
+        }
+      }, 200);
+
+    }, 200);
+  }
+
+  // Intercept fetch() for status 401
+  const originalFetch = window.fetch;
+  window.fetch = async function(...args) {
+    const response = await originalFetch.apply(this, args);
+    if (response.status === 401) {
+      handleAuth401();
+    }
+    return response;
+  };
+
+  // Intercept XMLHttpRequest for status 401
+  const originalOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method, url) {
+    this.addEventListener('load', function() {
+      if (this.status === 401) {
+        handleAuth401();
+      }
+    });
+    return originalOpen.apply(this, arguments);
+  };
+  // ----------------------------------------
+
+  // Unified stop function to clear all loops and listeners cleanly
   window.stopAutoGrind = () => {
     if (window._autoGrindItem19Timeout) clearTimeout(window._autoGrindItem19Timeout);
     if (window._autoGrindItem19Interval) clearInterval(window._autoGrindItem19Interval);
@@ -179,6 +266,6 @@
     delete window._autoGrindCollabInterval;
     delete window.stopAutoGrind;
     
-    console.log('All auto-grind loops stopped.');
+    console.log('All auto-grind loops and interceptors stopped.');
   };
 })();
