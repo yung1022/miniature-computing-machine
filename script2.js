@@ -7,7 +7,7 @@
   const INTERVAL_COLLAB_MS = 301000;  // How often Collab runs (e.g., every 1 second)
   
   // Configurable Auth Password for HTTP 401 handling
-  const password = process.env.AUTH_PASSWORD;
+  const password = 'joyiwj1022';
  
 
   // Target channel IDs array for Collab command (shuffled on start and reshuffled when exhausted)
