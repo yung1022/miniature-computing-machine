@@ -132633,5 +132633,36 @@
         "growth": 96850003
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-13T10:35:21.033Z",
+    "subscriberShare": 0.958982004741298,
+    "growthShare": 0.018284571353283933,
+    "totalSubscribers": 28175650149,
+    "totalGrowth": 1118523,
+    "fullSubscriberTotal": 2938079130755,
+    "fullGrowthTotal": 6117305013,
+    "channelSubscribers": [
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Fuck your mother smelly vagina",
+        "value": 28175650149
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Fuck your mother smelly vagina",
+        "value": 1118523
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "ㅤㅤㅤㅤㅤㅤㅤ",
+        "subscribers": 10348314223,
+        "growth": 106078992
+      }
+    ]
   }
 ]
