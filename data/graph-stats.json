@@ -141313,5 +141313,36 @@
         "growth": 60151707
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-14T10:05:22.863Z",
+    "subscriberShare": 0.9482804887512328,
+    "growthShare": 0.0014612497598605547,
+    "totalSubscribers": 28184111303,
+    "totalGrowth": 130596,
+    "fullSubscriberTotal": 2972128145346,
+    "fullGrowthTotal": 8937281195,
+    "channelSubscribers": [
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "死仆街，屌你老母臭閪冚家鏟",
+        "value": 28184111303
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "死仆街，屌你老母臭閪冚家鏟",
+        "value": 130596
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "ㅤㅤㅤ",
+        "subscribers": 11863183267,
+        "growth": 58994584
+      }
+    ]
   }
 ]
