@@ -1,0 +1,2444 @@
+﻿<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Grind your FYSC channel's growth with one click - the website version of the old Nightbot boost commands.">
+  <title>Grinding | tnstats</title>
+  <link rel="icon" type="image/png" href="https://tnstats.dev/hiddenfiles/favicon.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* Palette and button style taken from tnstats.dev */
+    :root {
+      --bg: #1e2024;
+      --card-bg: #2a2d33;
+      --card-border: #3a3e46;
+      --accent: #57f7ff;
+      --on-accent: #0d1113;
+      --text-dim: #9aa0aa;
+      --up: #4ee08a;
+      --down: #ff6b6b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Roboto', Arial, sans-serif;
+      color: white;
+      background-color: var(--bg);
+      padding: 90px 20px 60px;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .back-link {
+      position: fixed;
+      top: 24px;
+      left: 28px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s ease;
+    }
+
+    .back-link:hover {
+      color: var(--accent);
+    }
+
+    h1 {
+      font-size: clamp(28px, 4vw, 48px);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin: 0 0 6px;
+      text-align: center;
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .subtitle {
+      margin: 0 0 28px;
+      font-size: 14px;
+      color: var(--text-dim);
+      text-align: center;
+      max-width: 460px;
+    }
+
+    /* ---------- picker view ---------- */
+
+    /* A flex item under align-items:center shrinks to its content, so the
+       grid's min column widths made it wider than the screen. Pin it to the
+       available width instead. */
+    #pickerView {
+      width: 100%;
+      max-width: 1100px;
+      min-width: 0;
+    }
+
+    .search-container {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto 28px;
+    }
+
+    .search-bar {
+      flex-grow: 1;
+      min-width: 0;
+      padding: 12px 16px;
+      border-radius: 999px 0 0 999px;
+      border: 1px solid var(--card-border);
+      border-right: none;
+      background-color: var(--card-bg);
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search-bar::placeholder {
+      color: var(--text-dim);
+    }
+
+    .search-bar:focus {
+      border-color: var(--accent);
+    }
+
+    .search-button {
+      flex-shrink: 0;
+      padding: 12px 20px;
+      border-radius: 0 999px 999px 0;
+      border: 2px solid var(--accent);
+      background-color: transparent;
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .search-button:hover {
+      background-color: var(--accent);
+      color: var(--on-accent);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+      gap: 8px;
+      width: 100%;
+    }
+
+    .pick-card {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+      padding: 12px 14px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      color: white;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .pick-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      color: white;
+      background-color: var(--card-border);
+      overflow: hidden;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .pick-card > div:last-child {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .pick-card .name {
+      font-weight: 500;
+      font-size: 14px;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+
+    .pick-card .subs {
+      font-size: 12px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    .pick-card .cid {
+      font-size: 10px;
+      color: var(--text-dim);
+      opacity: 0.7;
+      margin-top: 2px;
+      font-family: monospace;
+      overflow-wrap: anywhere;
+    }
+
+    .loading {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-dim);
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(87, 247, 255, 0.25);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      color: var(--text-dim);
+      font-size: 14px;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    /* ---------- grind view ---------- */
+
+    .grind-panel {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 620px;
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+      padding: 32px 28px 28px;
+    }
+
+    .change-channel {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 18px;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .change-channel:hover {
+      color: var(--accent);
+    }
+
+    .grind-panel .avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 16px;
+      font-size: 24px;
+    }
+
+    .grind-panel .channel-name {
+      margin: 12px 0 2px;
+      font-size: 18px;
+      font-weight: 500;
+      text-align: center;
+      word-break: break-word;
+    }
+
+    .grind-panel .channel-subs {
+      margin: 0 0 18px;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .grind-left {
+      margin: -10px 0 16px;
+      font-size: 12px;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    .grind-left.low { color: var(--down); }
+
+    .rename-row {
+      display: flex;
+      width: 100%;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .rename-input {
+      flex-grow: 1;
+      min-width: 0;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--card-border);
+      background-color: var(--bg);
+      color: white;
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .rename-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .rename-input:focus {
+      border-color: var(--accent);
+    }
+
+    .rename-button {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border: 2px solid var(--accent);
+      border-radius: 999px;
+      background-color: transparent;
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .rename-button:hover:not(:disabled) {
+      background-color: var(--accent);
+      color: var(--on-accent);
+    }
+
+    .rename-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    /* ---------- auth view ---------- */
+
+    .auth-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 4px 0 6px;
+    }
+
+    .auth-form input {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--card-border);
+      background-color: var(--bg);
+      color: white;
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+    }
+
+    .auth-form input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .auth-form input:focus {
+      border-color: var(--accent);
+    }
+
+    .auth-form button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border: 2px solid var(--accent);
+      border-radius: 999px;
+      background-color: transparent;
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .auth-form button:hover:not(:disabled) {
+      background-color: var(--accent);
+      color: var(--on-accent);
+    }
+
+    .auth-form button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .auth-hint {
+      font-size: 12px;
+      color: var(--text-dim);
+      text-align: center;
+      margin: 0 0 4px;
+    }
+
+    .claim-box {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0 6px;
+    }
+
+    .claim-code {
+      margin: 0;
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px dashed var(--accent);
+      background-color: var(--bg);
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 18px;
+      letter-spacing: 1px;
+      color: white;
+      user-select: all;
+    }
+
+    .claim-copy,
+    .auth-link {
+      border: none;
+      background: none;
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .claim-copy:hover,
+    .auth-link:hover {
+      color: var(--accent);
+    }
+
+    .claim-google {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .google-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 1px solid var(--card-border);
+      border-radius: 999px;
+      background-color: var(--bg);
+      color: white;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+
+    .google-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .panel-header-row {
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .panel-header-row .change-channel {
+      margin-bottom: 0;
+    }
+
+    .panel-header-row { flex-wrap: wrap; gap: 8px 12px; }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin-left: auto;
+    }
+
+    /* "Grinding method: Chat / Website" switch, top right of the panel */
+    .mode-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 12px;
+      border: 1.5px solid var(--accent);
+      border-radius: 999px;
+      background-color: transparent;
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .mode-toggle strong { color: var(--accent); font-weight: 700; }
+    .mode-toggle:hover:not(:disabled) { background-color: var(--accent); color: var(--on-accent); }
+    .mode-toggle:hover:not(:disabled) strong { color: var(--on-accent); }
+    .mode-toggle:disabled { cursor: not-allowed; opacity: 0.6; }
+
+    .mode-note {
+      align-self: stretch;
+      margin: -6px 0 16px;
+      padding: 9px 12px;
+      border: 1px dashed var(--card-border);
+      border-radius: 12px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    .mode-note.chat { border-color: var(--accent); color: white; }
+
+    .logout-link {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .logout-link:hover {
+      color: var(--accent);
+    }
+
+    .section-label {
+      align-self: flex-start;
+      margin: 0 0 10px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+    }
+
+    .section-label.spaced {
+      margin-top: 22px;
+    }
+
+    /* Boost is the primary action, so it's the filled version of the site's
+       cyan button (same fill the site uses for its #position badges). */
+    .boost-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 20px;
+      border: 2px solid var(--accent);
+      border-radius: 999px;
+      cursor: pointer;
+      background-color: var(--accent);
+      color: var(--on-accent);
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 15px;
+      transition: transform 0.15s ease, filter 0.2s ease;
+    }
+
+    .boost-btn .sub {
+      font-weight: 400;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .boost-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    .boost-btn:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    .boost-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    /* "You gained" banner at the top of the grind panel (boost + collab) */
+    .gain-banner {
+      display: none;
+      width: 100%;
+      margin: 0 0 18px;
+      padding: 12px 16px;
+      border-radius: 16px;
+      border: 1px solid var(--up);
+      background-color: rgba(78, 224, 138, 0.10);
+      text-align: center;
+      animation: gainPop 0.35s ease;
+    }
+    .gain-banner .gain-title { font-size: 12px; color: var(--text-dim); margin: 0 0 2px; }
+    .gain-banner .gain-amount { font-size: 22px; font-weight: 700; color: var(--up); margin: 0; }
+    @keyframes gainPop { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    /* Collab: pick a channel from a dropdown, then press Collab */
+    .collab-box { width: 100%; margin-top: 22px; position: relative; }
+    .collab-row { display: flex; gap: 8px; width: 100%; }
+    .collab-row .rename-input { font-size: 14px; }
+    .collab-btn { display: flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 10px 18px; border: 2px solid var(--accent); border-radius: 999px; background-color: var(--accent); color: var(--on-accent); font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+    .collab-btn:disabled { cursor: not-allowed; opacity: 0.5; }
+    .collab-list { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20; display: none; max-height: 260px; overflow-y: auto; margin: 0; padding: 6px; list-style: none; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5); }
+    .collab-list li { display: flex; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: 10px; font-size: 13px; cursor: pointer; }
+    .collab-list li:hover, .collab-list li.active { background-color: var(--bg); }
+    .collab-list .opt-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .collab-list .opt-subs { color: var(--text-dim); flex-shrink: 0; }
+    .collab-list .opt-empty { color: var(--text-dim); cursor: default; }
+    .collab-hint { margin: 8px 0 0; font-size: 12px; color: var(--text-dim); text-align: center; }
+
+    .more-row { display: none; width: 100%; justify-content: center; margin-top: 14px; }
+    .more-row button { padding: 10px 22px; border: 2px solid var(--accent); border-radius: 999px; background: transparent; color: var(--accent); font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+    .more-row button:hover { background-color: var(--accent); color: var(--on-accent); }
+
+    /* a command that is switched off: looks disabled, but still answers hover and click */
+    .command-btn.maintenance { opacity: 0.4; cursor: not-allowed; filter: grayscale(1); }
+
+    .command-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+      gap: 8px;
+      width: 100%;
+    }
+
+    .command-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 10px 8px;
+      border: 2px solid var(--accent);
+      border-radius: 14px;
+      background-color: transparent;
+      color: var(--accent);
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.12s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .command-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      background-color: var(--accent);
+      color: var(--on-accent);
+    }
+
+    .command-btn:hover:not(:disabled) .command-hint {
+      color: var(--on-accent);
+    }
+
+    .command-btn:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    .command-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .command-name {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .command-hint {
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+
+    @keyframes punch {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(0.88); }
+      100% { transform: scale(1); }
+    }
+
+    .punch {
+      animation: punch 0.35s ease;
+    }
+
+    .status-line {
+      margin-top: 20px;
+      min-height: 20px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .status-line.ok { color: var(--up); }
+    .status-line.wait { color: var(--text-dim); }
+    .status-line.err { color: var(--down); }
+
+    .live-link {
+      margin-top: 14px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      border: 2px solid var(--accent);
+      border-radius: 999px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .live-link:hover {
+      background-color: var(--accent);
+      color: var(--on-accent);
+    }
+
+    /* ---------- human check (the server asks for one every so often) ---------- */
+    .check-box {
+      display: none;
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px 16px 12px;
+      border: 1px dashed var(--accent);
+      border-radius: 14px;
+      background-color: var(--bg);
+      text-align: center;
+    }
+
+    .check-box .auth-hint { margin: 0 0 10px; font-size: 13px; color: white; }
+    .check-box .rename-row { margin-bottom: 0; }
+    .check-box .status-line { margin-top: 8px; min-height: 18px; }
+
+    /* ---------- odometer (growth counter) ---------- */
+    .odo {
+      width: 100%;
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .odo-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-dim);
+    }
+
+    .odo-bezel { max-width: 100%; }
+
+    .odo-window {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      font-size: clamp(18px, 5.2vw, 27px);
+    }
+
+    .odo-window.long { font-size: clamp(15px, 4.2vw, 22px); }
+
+    .odo-track {
+      display: flex;
+      align-items: center;
+      font-family: 'Roboto', Arial, sans-serif;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.3;
+      color: #fff;
+    }
+
+    /* one drum: a window showing one digit of a tall strip 0-9-0-9; digits fade out
+       toward the top/bottom edge while they roll, so there is no box behind them */
+    .odo-drum {
+      position: relative;
+      width: 0.62em;
+      height: 1.3em;
+      overflow: hidden;
+      color: #fff;
+      transition: color 0.6s ease;
+      -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+      mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 86%, transparent 100%);
+    }
+
+    .odo-drum.odo-up { color: var(--up); }
+    .odo-drum.odo-down { color: var(--down); }
+
+    .odo-strip {
+      will-change: transform;
+    }
+
+    .odo-strip span {
+      display: block;
+      height: 1.3em;
+      text-align: center;
+    }
+
+    .odo-sep {
+      align-self: flex-end;
+      padding: 0 1px 0.12em;
+      font-size: 0.7em;
+      line-height: 1;
+      color: #9aa0aa;
+    }
+
+    .odo-sign {
+      padding-right: 0.12em;
+      color: var(--accent);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .odo-strip { transition: none !important; }
+    }
+
+    .other-commands {
+      align-self: stretch;
+      margin-top: 26px;
+      padding-top: 20px;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .other-commands ul {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+
+    .other-commands strong {
+      color: white;
+    }
+
+    @media (max-width: 520px) {
+      body { padding: 76px 12px 40px; }
+      .back-link { top: 18px; left: 16px; }
+      .grid { grid-template-columns: 1fr; }
+      .grind-panel { padding: 24px 16px 20px; }
+      .command-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Channel <span>Grinding</span></h1>
+  <p class="subtitle">Pick your channel below, then use any of the commands (buttons) to grow it</p>
+
+  <!-- picker view -->
+  <div id="pickerView" style="display: none;">
+    <div class="search-container">
+      <input type="text" id="searchInput" class="search-bar" placeholder="Search by name or channel ID...">
+      <button id="searchButton" class="search-button">Search</button>
+    </div>
+    <div class="loading" id="loading" style="display: none;"><span class="spinner"></span> Loading channels...</div>
+    <div class="grid" id="channelGrid"><button class="pick-card" type="button" data-idx="0"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="titouc" src="https://yt3.ggpht.com/bvCnX8-UOVW6RA2i5LPG1oEwwkbxpvIgV8LTbLQICZRsgG6BjY53MulQNNG0DwJV7dIepB_UCg=s96-c"></div><div><div class="name">titouc</div><div class="subs">685,729,615,652 subs</div><div class="cid">UCt_yPcT2JiSM0PMAwiyUzGw</div></div></button><button class="pick-card" type="button" data-idx="1"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="ilikecharliekirk" src="https://yt3.ggpht.com/DOQjq5q9a8kC3tQbQVt1Li3BEddwBRD6sYrdkXzCQKqmjrfnouM-9grMZZBLVW4JSRRk9IqkLA=s96-c"></div><div><div class="name">ilikecharliekirk</div><div class="subs">223,798,709,804 subs</div><div class="cid">UCq8PEfU1I-XW4mWXqo0M97w</div></div></button><button class="pick-card" type="button" data-idx="2"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="OmegaLayer" src="https://yt3.ggpht.com/Au2fuCIgjdae_5nZKAkNmEjjD5ImCdAyL8UMCNA6-T-SvnxO55qfBJ8DIh4KrBnKrqc0MANctLo=s96-c"></div><div><div class="name">OmegaLayer</div><div class="subs">217,590,317,690 subs</div><div class="cid">UCWAEzoQD-WgJdloPQm87I3g</div></div></button><button class="pick-card" type="button" data-idx="3"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="アティーン" src="https://yt3.ggpht.com/DW7uW1by_zNgPCdo5DsyqjoNkyv8WeKdwrcfp1xOJ4KVfPfxF-92igfWn9qF9_aalBU1cQE4zRI=s96-c"></div><div><div class="name">アティーン</div><div class="subs">203,958,296,516 subs</div><div class="cid">UCaKpEF5zW2FPc1oLMrb_aNQ</div></div></button><button class="pick-card" type="button" data-idx="4"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="No interest to grind rn" src="https://yt3.ggpht.com/iDLE_H3rXb_MH4HCexBKAytOic1_euEf4EME1A55ufmIGFE1n_8MSwdJ8lCy6UHPu1ooSUZog0Q=s96-c"></div><div><div class="name">No interest to grind rn</div><div class="subs">125,190,678,841 subs</div><div class="cid">UCOVJA_pByYFGgZQGCU1gmNQ</div></div></button><button class="pick-card" type="button" data-idx="5"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Smieszek" src="https://yt3.ggpht.com/e494R_PozGOK6ZTqDJkf81ZHI-XFf1TUV7xDvk0IesE09ia6Stcj4NXeeWdYBVd_JXvtcnuKCA=s96-c"></div><div><div class="name">Smieszek</div><div class="subs">117,539,283,473 subs</div><div class="cid">UCz9li2hCp-aE1notlZcb94Q</div></div></button><button class="pick-card" type="button" data-idx="6"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Suika" src="https://yt3.ggpht.com/UA0COtc-ZeLRgdVkQOyc4O30m4GWsnu5qn14f13IhqKN6e0GhX4Fb8vl6N_VmVKMxKJI9J6ff5k=s96-c"></div><div><div class="name">Suika</div><div class="subs">101,209,102,963 subs</div><div class="cid">UCTz-CyIK6Es1ODoKiUwIFYw</div></div></button><button class="pick-card" type="button" data-idx="7"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Skinny_yz" src="https://yt3.ggpht.com/6MQSTC5JOGnB-5ccm2ptWCR7Bx1TCa-pUP43Zlv17nKLa8LK_vaMBHeSfSdv6Q4XtciRLSHDYGs=s96-c"></div><div><div class="name">Skinny_yz</div><div class="subs">86,229,817,530 subs</div><div class="cid">UC2nsfOJ_mCP-feylaPfocow</div></div></button><button class="pick-card" type="button" data-idx="8"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="☆Boeing747stats☆" src="https://yt3.ggpht.com/xejNlSV4VZVvndKeKyAruiYxki_LKz4_a-g7OjmtDSnHbI5ItJmaYIxG199w9fQhhhz1YPABpw=s96-c"></div><div><div class="name">☆Boeing747stats☆</div><div class="subs">85,712,062,869 subs</div><div class="cid">UC6dTOXNJ-Lwb-zJTP3fg2OQ</div></div></button><button class="pick-card" type="button" data-idx="9"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Retirement soon." src="https://yt3.ggpht.com/SLneIY2dgwvwvDG2VRqs-9F9PkQJNTnQG0fd14D-3hSoaT9IRxtPyFrHkaFKag69upUVW7145Pw=s96-c"></div><div><div class="name">Retirement soon.</div><div class="subs">82,922,881,335 subs</div><div class="cid">UCwU7roCHLOv1e_M4s6orI5A</div></div></button><button class="pick-card" type="button" data-idx="10"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="UltimateTrioTitans" src="https://yt3.ggpht.com/A1aaFpRv7UYowvdO1kTE-N-ICTax-E6hSR8sufUkWCAr6_3xq7hzhv1mv36FKc__f-cXPESIbxs=s96-c"></div><div><div class="name">UltimateTrioTitans</div><div class="subs">77,809,345,526 subs</div><div class="cid">UCg0qWTbn3R6j5K7YWbrMLNw</div></div></button><button class="pick-card" type="button" data-idx="11"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="kaleidoscoope" src="https://yt3.ggpht.com/s7pQIhleAumkDQ92SiCw6kS8FEFYbZVRx5W6lZw9VcdeOi_XDS9q0Yjv_cdddgSstn9sRUnqVw=s96-c"></div><div><div class="name">kaleidoscoope</div><div class="subs">40,533,802,560 subs</div><div class="cid">UCjSUkECY28s-vx5b92bSbIg</div></div></button><button class="pick-card" type="button" data-idx="12"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="#15 sucks be fr" src="https://yt3.ggpht.com/vGNgHdNEAt8XVqbpLlOSlEIEM2l8msMxE_Vjj5kt4eMAvz8BotmhEJn8XPacOZYSCtlnszU7=s96-c"></div><div><div class="name">#15 sucks be fr</div><div class="subs">35,933,197,912 subs</div><div class="cid">UCxpGqtQyLRCUra2Jz3bOtNA</div></div></button><button class="pick-card" type="button" data-idx="13"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="jaegotalieb" src="https://yt3.ggpht.com/0dav2-hSBRGl16Va7c5_CJq5sf4RWyuqQDixVU5hKz0khnokmf_OFKmGLin_W66NTXd5Y_lvIg=s96-c"></div><div><div class="name">jaegotalieb</div><div class="subs">32,009,752,746 subs</div><div class="cid">UCnS0qG0Q6cxzpjo4X7oIsaQ</div></div></button><button class="pick-card" type="button" data-idx="14"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="ᅠ" src="https://yt3.ggpht.com/I224Y_wmGzDrMONU3NTEXjztHGSPEp3FzX4i57A55qVdkRV5rUgF8nI7NCBuKbQWkUZACupS=s96-c"></div><div><div class="name">ᅠ</div><div class="subs">31,140,403,482 subs</div><div class="cid">UCUCd5l4ImtAlxmDcNsBdmVA</div></div></button><button class="pick-card" type="button" data-idx="15"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="brick but slow kinda" src="https://yt3.ggpht.com/k3L3jAhlay5wZgNHuZeRMdcbXgL7nZWMndxMo5-6bG55WjA26I4sa9eW5pQV7jvzBosz2_ubLg=s96-c"></div><div><div class="name">brick but slow kinda</div><div class="subs">29,347,202,815 subs</div><div class="cid">UCJdm8wq9zs9MHRHd4TO-69w</div></div></button><button class="pick-card" type="button" data-idx="16"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="戇鳩死仆街，屌你老母臭閪冚家鏟" src="https://yt3.ggpht.com/QkYi96QcFIaXraSwlvMMnFat5GrWcCATho3jEPV92YMRjn13Y7_tG-8khUu4qTj9USeCrp7nww=s96-c"></div><div><div class="name">戇鳩死仆街，屌你老母臭閪冚家鏟</div><div class="subs">28,188,575,987 subs</div><div class="cid">UCjrii0S-8k6sfc_ds3V-mRg</div></div></button><button class="pick-card" type="button" data-idx="17"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Epic Cobalt Battles" src="https://yt3.ggpht.com/RD32aCqyQAH3JP27qsqunD7iOZj8ffz4d0xT-N9Nk5fxGJ54jSpda2GvWxvjXaRcXEQOOdmX=s96-c"></div><div><div class="name">Epic Cobalt Battles</div><div class="subs">26,818,390,391 subs</div><div class="cid">UCpCjxK0jFLuFEKsbyNeFy6A</div></div></button><button class="pick-card" type="button" data-idx="18"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="INICIAL" src="https://yt3.ggpht.com/KqOS_z8ZDKqGSKS5qKThP1n4d9BlthqSOJ9r8wUxvvkZ1mJb80XYIB59-QASBNxtViKCsttAfw=s96-c"></div><div><div class="name">INICIAL</div><div class="subs">22,902,068,935 subs</div><div class="cid">UC4TlrcrHRI6nH6a-EP6jkNg</div></div></button><button class="pick-card" type="button" data-idx="19"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="ARF" src="https://yt3.ggpht.com/TZWFYnzzP6W87a_bFzL335QqbAOAeiWrMl7QKcivLBMwIuGCA5ySoL7CIxv-wfR9FEDemjtjxuQ=s96-c"></div><div><div class="name">ARF</div><div class="subs">21,390,896,026 subs</div><div class="cid">UCtEqdmImxd48zPTXcwCYOvA</div></div></button><button class="pick-card" type="button" data-idx="20"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="☄️" src="https://yt3.ggpht.com/Nvbdv88eVJ3QSyJloJZ9Bs4PvGxzN1EWipkYQWjhX1FbyYpcHLk_U-ZqHXD63KBwTFNpyJbc=s96-c"></div><div><div class="name">☄️</div><div class="subs">19,055,409,835 subs</div><div class="cid">UCRpOAh9kAR_DxeSIeALHg0w</div></div></button><button class="pick-card" type="button" data-idx="21"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="ts sentence is 30 characters e" src="https://yt3.ggpht.com/Q2jpwbmuVE1SCzIe5WOXkm3BldjhOkkYORkHiReYtJ3hVWYpFyo5_1b2POrq9Rii-azOH2i6A2I=s96-c"></div><div><div class="name">ts sentence is 30 characters e</div><div class="subs">18,163,609,906 subs</div><div class="cid">UCGGi_OGRFpGSE5zOyEpWQfg</div></div></button><button class="pick-card" type="button" data-idx="22"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Greg (Lucien)" src="https://yt3.ggpht.com/qhwHjDQZZAdDk_QRm_Swa2uahSJ0eei3YyI29JPGIlouPIjCeld9thpCY4kLU1X7qovH9KIFFw=s96-c"></div><div><div class="name">Greg (Lucien)</div><div class="subs">18,127,922,097 subs</div><div class="cid">UCTqJpW96pPJ4rhyqXBAvs0w</div></div></button><button class="pick-card" type="button" data-idx="23"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="🟢Green Cat Mations" src="https://yt3.ggpht.com/43mBJhlsaK4V9TSAnB0o_peeHS593ahyYO8eIa2f0Tfo3lblc_QT4Mv6HlLWpEELGNJlG4QR_YU=s96-c"></div><div><div class="name">🟢Green Cat Mations</div><div class="subs">18,020,659,165 subs</div><div class="cid">UC21FBMNOOofDIuYDmFxZJTg</div></div></button><button class="pick-card" type="button" data-idx="24"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="slowest of them all" src="https://yt3.ggpht.com/iA8XzyJMjYNGsKnZ2vi-8DVN9r3l3M8hQeQK_cSaTXpJJt29If3XSYPBxdweNy3CogteDTMjFg=s96-c"></div><div><div class="name">slowest of them all</div><div class="subs">15,833,768,504 subs</div><div class="cid">UCtlWOC26CPA0Dub5i6tVZWQ</div></div></button><button class="pick-card" type="button" data-idx="25"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="melissa" src="https://yt3.ggpht.com/Xp9DpXfLrpHxv0A3tfseDqlyk5w3LKaTi-UIu7ZoFqgKJyOf6vPydI6gy5lOmUmIVhcGoMPI-w=s96-c"></div><div><div class="name">melissa</div><div class="subs">15,077,846,064 subs</div><div class="cid">UCRXTXsGKyeYdcxwCCQXq82A</div></div></button><button class="pick-card" type="button" data-idx="26"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="gp" src="https://yt3.ggpht.com/M59yql5CdHG7JRQUkHIy_6gFog5fLdARrY-YgyQiadShziY-5wQintEpj4OsBFjpJQHl8CSZbQ=s96-c"></div><div><div class="name">gp</div><div class="subs">14,662,393,414 subs</div><div class="cid">UCSuKvHLF9Ekn2zlhQMtQYbQ</div></div></button><button class="pick-card" type="button" data-idx="27"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="grindcat" src="https://yt3.ggpht.com/exWzRvdN4gn1E3wErIrxHZ6u420ktNW4yElNZ3CBeNlJuvNvpxqXPWxTtkxab9TMcyVD78l1iQ=s96-c"></div><div><div class="name">grindcat</div><div class="subs">13,090,250,420 subs</div><div class="cid">UCyT72Xjgnd7MCTm5bp6faaw</div></div></button><button class="pick-card" type="button" data-idx="28"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Countryballeditz" src="https://yt3.ggpht.com/ASrYRQ4JUhMTW8Duhytuo8XjYOrVnu-W4muB9To09jlwSd1S9Yph-QRMv3qJXp6Lyfcn7uSq6g=s96-c"></div><div><div class="name">Countryballeditz</div><div class="subs">12,387,655,526 subs</div><div class="cid">UC_ncUpVeG9yShbSMv6Fivtg</div></div></button><button class="pick-card" type="button" data-idx="29"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="ナイトシャドウ" src="https://yt3.ggpht.com/pEhQXxWC5_wLcJCshJC5CmrbenU0jG0tIwJsJ5Qf1lVeSJeP_SEraqqH1yTcT432Dc7QH0Juq9I=s96-c"></div><div><div class="name">ナイトシャドウ</div><div class="subs">12,367,060,990 subs</div><div class="cid">UCUqfJzrGqtTVnq-w20dks7w</div></div></button><button class="pick-card" type="button" data-idx="30"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="ILikeDucks rb" src="https://yt3.ggpht.com/0fPPD_2PUC1Y4FLaq2Fj8OdbcELYH-kHRyYtz_IavnqTzq76lSmqdJAcqZAsLA5_dHHySJbBnA=s96-c"></div><div><div class="name">ILikeDucks rb</div><div class="subs">12,214,523,479 subs</div><div class="cid">UCRuKgkvPTrfJj5CDIbkbTiQ</div></div></button><button class="pick-card" type="button" data-idx="31"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="ㅤㅤㅤ" src="https://yt3.ggpht.com/dOnNCo5jOsERYBJQGs5WgcPUsTAs-wS_L6WoOl6skcy41uyBGNRv571I49fL1f6yPqSoH0IH3g=s96-c"></div><div><div class="name">ㅤㅤㅤ</div><div class="subs">12,071,121,441 subs</div><div class="cid">UC5Xo4FOzXrNCbzjO20vEQIQ</div></div></button><button class="pick-card" type="button" data-idx="32"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Darkey" src="https://yt3.ggpht.com/MHSH4bLzbbxa7nGVoWDyaXFmzM7mNrtfCY0hn_KymOCQHt2H-WnsGBZMh5DiF5t2XedWLa4v=s96-c"></div><div><div class="name">Darkey</div><div class="subs">11,586,569,582 subs</div><div class="cid">UCn8D-JMGXxaZpH4h2tsj2sA</div></div></button><button class="pick-card" type="button" data-idx="33"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Samfy" src="https://yt3.ggpht.com/M4QWt1qtefCIdZ083nJzhJEO5w3COOeYP-96JNgOQp7nI1dDbJI2gEIpLeEr8j3T-sqojNbY3w=s96-c"></div><div><div class="name">Samfy</div><div class="subs">11,549,075,597 subs</div><div class="cid">UCpmVji4oQ4tuUgM6ugaqSTw</div></div></button><button class="pick-card" type="button" data-idx="34"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Xteezre (12B?)" src="https://yt3.ggpht.com/xDz2ztrwaI9kBsbLtZhVFGGHEqZX3HaQtNm2GPCJuujm5g6zVySDR9BF70Yr9SXz755uWwbhsg=s96-c"></div><div><div class="name">Xteezre (12B?)</div><div class="subs">11,516,891,319 subs</div><div class="cid">UCEKUU0a4jHDcvUcNAr22DhA</div></div></button><button class="pick-card" type="button" data-idx="35"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Zxytar" src="https://yt3.ggpht.com/Rq4gZ_fnYTqY9zs2X0gECTV24Mtboad3K-pbbTNV1mmBCSb0mI3TFNxo9GZcYLSZb9GI_4vr=s96-c"></div><div><div class="name">Zxytar</div><div class="subs">9,335,944,623 subs</div><div class="cid">UC3fB3RiON_x3FZc_Ouk12Xg</div></div></button><button class="pick-card" type="button" data-idx="36"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="ezequiel" src="https://yt3.ggpht.com/_BkNE36cGcauDNLjGLQ-iTIAY4xeURjLZ6qQpTSQwTX4t94EtwKdILj58dAYbTeicNnxq6sY=s96-c"></div><div><div class="name">ezequiel</div><div class="subs">9,324,598,532 subs</div><div class="cid">UCaYpgDzdbh-Bgn2uZqqTLiw</div></div></button><button class="pick-card" type="button" data-idx="37"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Co4per" src="https://yt3.ggpht.com/oSSy-parnvSGG-Vfeykr_d-Asz9as0veukxpy4yPQ6Ki1wb-uHphv55LIA0TXYnA6_ijt4sd=s96-c"></div><div><div class="name">Co4per</div><div class="subs">8,872,211,124 subs</div><div class="cid">UCaf4efgRvFzpgmVTS2flXgA</div></div></button><button class="pick-card" type="button" data-idx="38"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Yuelong103" src="https://yt3.ggpht.com/c5Xe4YLEl8CqswulwIKzpdsNf10YOGfl5KqFMrWmpfOy7imTd8GUKXpdPvNUOEud8758ud0rRVE=s96-c"></div><div><div class="name">Yuelong103</div><div class="subs">8,792,063,429 subs</div><div class="cid">UCNOQsMvnqvjFxbstBMf6AHQ</div></div></button><button class="pick-card" type="button" data-idx="39"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="9B soon" src="https://yt3.ggpht.com/3FIuNbbPxhpKJ6LWvZHIAqCOnazApbFJYIIZtJAWkoxaAqiRPhwxCPmpxF5xh17iZk7MfNzq=s96-c"></div><div><div class="name">9B soon</div><div class="subs">8,770,733,927 subs</div><div class="cid">UCOYQ-GCOWr-CgPGu3njD5dw</div></div></button><button class="pick-card" type="button" data-idx="40"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="cashew butter" src="https://yt3.ggpht.com/YBc58_W6HuzStAuh1_tjG7bVD3TulDbBPI348l2NeGbYw0bClf_-Ug9vya9EimX3OZTplv74GA=s96-c"></div><div><div class="name">cashew butter</div><div class="subs">8,499,646,665 subs</div><div class="cid">UCrtqqhkFAKIfVfP7mI2-6Vg</div></div></button><button class="pick-card" type="button" data-idx="41"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Rheneas on break 68" src="https://yt3.ggpht.com/nn5eae2mRdm2_5qYEjuJVpRuWHLxuOW9q27tlPgXdcsV0h-eZeE21ApV0qrI9f7grle6hemF6OE=s96-c"></div><div><div class="name">Rheneas on break 68</div><div class="subs">8,433,825,976 subs</div><div class="cid">UCcNKWC5PzUESEkkuv9ewvxA</div></div></button><button class="pick-card" type="button" data-idx="42"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Napa" src="https://yt3.ggpht.com/TxaZ5FNJx-xyMLYea0OR7jrODJaN0VD19k-VecgvrCgceaxOsfxELhg3R29wGQIvY0F15nPAs9U=s96-c"></div><div><div class="name">Napa</div><div class="subs">8,166,607,153 subs</div><div class="cid">UCm_WW24sfWrx9zQRqZc372w</div></div></button><button class="pick-card" type="button" data-idx="43"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Tucer0" src="https://yt3.ggpht.com/_KxPr_sHZJZ6D4DFlHVt65bhNUTQfOom65q-Kdh11UaRZH68cRiRjCH8kJMrVNZn8SwKalzqLUQ=s96-c"></div><div><div class="name">Tucer0</div><div class="subs">8,110,409,713 subs</div><div class="cid">UCikJTO_qkg9fOy8aYEdhauQ</div></div></button><button class="pick-card" type="button" data-idx="44"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Journey to 10B" src="https://yt3.ggpht.com/3FsjjMv4E1wrY15J8xPg_PNo7IxM1beehngIx5Oaah68QpVWBQRNsOl-uE-htXeJURXjuSJAGlI=s96-c"></div><div><div class="name">Journey to 10B</div><div class="subs">7,695,456,283 subs</div><div class="cid">UCzM6ZuvzbvbZb73PH0HRvYQ</div></div></button><button class="pick-card" type="button" data-idx="45"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="我命由我不由天" src="https://yt3.ggpht.com/Nc8kaUwV51ArD9zSz99LUXTXLjuRfamDRkj3OFA5O2e9GhUVtqfX6VsIqbtS6LYqlHo2zjOq=s96-c"></div><div><div class="name">我命由我不由天</div><div class="subs">7,621,672,093 subs</div><div class="cid">UC6Afgj8cy_WQwjytivecFKA</div></div></button><button class="pick-card" type="button" data-idx="46"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="MarQueak FYSC" src="https://yt3.ggpht.com/21famjCykVw754Xqs5WpLms5janE7rsV80diVQ4aFqy037yKeuia084HlgJ-oEqPzBPsMG5-Fg=s96-c"></div><div><div class="name">MarQueak FYSC</div><div class="subs">7,080,490,844 subs</div><div class="cid">UCUEC_v_a4yTuZTqRmlTwIqA</div></div></button><button class="pick-card" type="button" data-idx="47"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="pling" src="https://yt3.ggpht.com/pOVBFfK6vwZ-G7zCa6qbVhVIF6XQ6OTOW8roa1h_fVccZYqUVGf-YPHOoxZK1cFse3O9553S=s96-c"></div><div><div class="name">pling</div><div class="subs">6,545,997,212 subs</div><div class="cid">UCzoZLjW_H_exkpLD8AW93AQ</div></div></button><button class="pick-card" type="button" data-idx="48"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="REMOVE ME" src="https://yt3.ggpht.com/p99fWdJX3LQhYCzzR6WHKHPlIjr5oesDhi92kzjJw0Pi-CmkcnUDocA_VSe8-zpRDogXVjrM_Uw=s96-c"></div><div><div class="name">REMOVE ME</div><div class="subs">6,523,692,816 subs</div><div class="cid">UCxrZF5SjVvXeXWiWvp96eZQ</div></div></button><button class="pick-card" type="button" data-idx="49"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Ezequiel villaba 2026" src="https://yt3.ggpht.com/lQEw42aJXqqhaAk3dJ-hNO_9M4u-9ZSLDQUfUMCWPeWYI2OP7esZRfvlAecPZA8tc7Z2bXW8ng=s96-c"></div><div><div class="name">Ezequiel villaba 2026</div><div class="subs">6,160,472,029 subs</div><div class="cid">UC9VHNsPP48ejH6KIURpOGIA</div></div></button><button class="pick-card" type="button" data-idx="50"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Spectral2K26 (6B/Top 50 Soon)" src="https://yt3.ggpht.com/rBfmBqA0BKFNS5XMbecjQH2srdHfThQYOgiDWPy5jsa66HzjM2GEK9RjVkCuZQ7VLPK1CRiw=s96-c"></div><div><div class="name">Spectral2K26 (6B/Top 50 Soon)</div><div class="subs">6,083,904,905 subs</div><div class="cid">UC3hHwxwqC2RcKMr3zxiyQnA</div></div></button><button class="pick-card" type="button" data-idx="51"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="AWSW" src="https://yt3.ggpht.com/wSgNGileeO22cgxx3b6ZV8mKxhel7E_sjT5Zu6KmXsC_JwpSA0KUElOykZTfTvTc0coVTfgZoQ=s96-c"></div><div><div class="name">AWSW</div><div class="subs">5,885,396,540 subs</div><div class="cid">UCIRaXH6EprLfQFSK2E6whOA</div></div></button><button class="pick-card" type="button" data-idx="52"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Nin to 5b" src="https://yt3.ggpht.com/ofa98sv4OCviY7NW8QT_F1PmSt6XdqGUh2wowtYw4poX4aBMkRQJ-6GSeJ-0qqyWjfGhBBZW_Q=s96-c"></div><div><div class="name">Nin to 5b</div><div class="subs">5,244,908,655 subs</div><div class="cid">UCFuYIUC9LSsaTT0aZGkAmVg</div></div></button><button class="pick-card" type="button" data-idx="53"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="h.." src="https://yt3.ggpht.com/x9wgjcNyrCXBFNm9vfuFETnZGd7TzZCs5XwgdRCQivngtpBlRN3gXUpg9V9YnC_DIGQhdS734Q=s96-c"></div><div><div class="name">h..</div><div class="subs">5,118,934,299 subs</div><div class="cid">UCkHqPxtOFs0_a9gHXClU_Bw</div></div></button><button class="pick-card" type="button" data-idx="54"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt=":sob:" src="https://yt3.ggpht.com/ey8hp_zctK_ZDsqUVIxx_OZSSzz0HKltNRlyUsm9Vi_bPDNIHDNWLR7HGbbNJlcZp8tw1f3V=s96-c"></div><div><div class="name">:sob:</div><div class="subs">5,042,801,922 subs</div><div class="cid">UCWNYRW8_0Bm8nCVGC7m3CfA</div></div></button><button class="pick-card" type="button" data-idx="55"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="PumaFroom" src="https://yt3.ggpht.com/SXj_0V0hsgXqH1bQr7KQKcSiX3EzlROvKElgWq4flvYb7MkECFo73FR5mB14ht_yWnFlwYzdQA=s96-c"></div><div><div class="name">PumaFroom</div><div class="subs">4,799,657,949 subs</div><div class="cid">UCAjy3sFc2tI6MifMW60r5Eg</div></div></button><button class="pick-card" type="button" data-idx="56"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="1day brake" src="https://yt3.ggpht.com/e73TjHW44GTCIaXpv2cIXpOTh0CwaIk3xQP6Xrn96SeyqA1t_AFoGZuemkO22DA0FyV6V_VSqqc=s96-c"></div><div><div class="name">1day brake</div><div class="subs">4,793,023,240 subs</div><div class="cid">UCoxwIUKcrqE865xOCgH2TMQ</div></div></button><button class="pick-card" type="button" data-idx="57"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="T-Shirts" src="https://yt3.ggpht.com/xgCohjGEJdZY61zWYHFDBwOBKilfNQF8QXTP_RIkoBYDeepPwiJr2EGPze6dd66Kiz0IjOEYluw=s96-c"></div><div><div class="name">T-Shirts</div><div class="subs">4,408,378,060 subs</div><div class="cid">UCl0jmIzoTsNKoapAYPgSLiA</div></div></button><button class="pick-card" type="button" data-idx="58"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="el bookito" src="https://yt3.ggpht.com/eJgNTSiTcO8vsONy7K0WDVTyJQkMpOBbdnVocpsjYNE7vrr9EU6CiksJwQ4dHcl5t3TAv-I3Ug=s96-c"></div><div><div class="name">el bookito</div><div class="subs">3,848,419,234 subs</div><div class="cid">UCVJSUl7aDHiEeDrkr1aCchw</div></div></button><button class="pick-card" type="button" data-idx="59"><div class="avatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="Alex" src="https://yt3.ggpht.com/NSaP4WomyJCqqwkOi5txtJFxNwEr4NsSy49beM9_3DtOCnhINMSseB0v3g2PdfwC4SuvgHFI7z4=s96-c"></div><div><div class="name">Alex</div><div class="subs">3,705,353,342 subs</div><div class="cid">UCz7iouByfcs26DZjImVe6VQ</div></div></button></div>
+    <div class="more-row" id="moreRow" style="display: flex;"><button type="button" id="moreButton">Show more channels (4793 left)</button></div>
+    <p class="empty-state" id="emptyState" style="display: none;">No channels found.</p>
+  </div>
+
+  <!-- auth view -->
+  <div class="grind-panel" id="authView" style="display: none;">
+    <button class="change-channel" id="authChangeChannelBtn"><i class="fa-solid fa-arrow-left"></i> Change channel</button>
+    <div class="avatar" id="authAvatar"></div>
+    <p class="channel-name" id="authChannelName"></p>
+    <p class="auth-hint" id="authHint">Checking this channel...</p>
+
+    <form class="auth-form" id="authForm">
+      <input type="password" id="authPasswordInput" placeholder="Password" autocomplete="current-password" minlength="6">
+      <input type="password" id="authConfirmInput" placeholder="Confirm password" autocomplete="new-password" minlength="6">
+      <p class="auth-hint" id="captchaQuestionLabel" style="margin:0;">Quick check: what's <strong id="captchaQuestion">...</strong>?</p>
+      <input type="text" inputmode="numeric" id="captchaAnswerInput" placeholder="Your answer" autocomplete="off">
+      <button type="submit" id="authSubmitButton"><i class="fa-solid fa-lock"></i> <span id="authSubmitLabel">Log in</span></button>
+    </form>
+
+    <div class="claim-box" id="claimBox">
+      <p class="auth-hint" style="margin:0;">While signed in to YouTube <strong>as this channel</strong>, type this in the FYSC live chat:</p>
+      <p class="claim-code" id="claimCommand">!claim ......</p>
+      <button type="button" class="claim-copy" id="claimCopyBtn"><i class="fa-regular fa-copy"></i> Copy</button>
+      <div class="claim-google" id="claimGoogle">
+        <p class="auth-hint" style="margin:0;">or</p>
+        <button type="button" class="google-btn" id="claimGoogleBtn"><i class="fa-brands fa-google"></i> Verify with Google instead</button>
+      </div>
+      <p class="auth-hint" id="claimWaitHint" style="margin:0;">Waiting for your message...</p>
+    </div>
+
+    <button type="button" class="auth-link" id="authReclaimLink">Not your password, or forgot it? Re-claim through live chat</button>
+    <p class="status-line" id="authStatusLine"></p>
+  </div>
+
+  <!-- grind view -->
+  <div class="grind-panel" id="grindPanel" style="display: flex;">
+    <div class="panel-header-row">
+      <button class="change-channel" id="changeChannelBtn"><i class="fa-solid fa-arrow-left"></i> Change channel</button>
+      <div class="header-actions">
+        <button class="mode-toggle" id="modeToggle" type="button" title="Switch between chat and website grinding"><i class="fa-solid fa-right-left"></i> Grinding method: <strong id="modeLabel">Website</strong></button>
+        <button class="logout-link" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Log out</button>
+      </div>
+    </div>
+    <div class="gain-banner" id="gainBanner" role="status" aria-live="polite" style="display: none;">
+      <p class="gain-title" id="gainTitle"></p>
+      <p class="gain-amount" id="gainAmount"></p>
+    </div>
+    <div class="avatar" id="grindAvatar"><img referrerpolicy="no-referrer" decoding="async" loading="lazy" alt="戇鳩死仆街，屌你老母臭閪冚家鏟" src="https://yt3.ggpht.com/QkYi96QcFIaXraSwlvMMnFat5GrWcCATho3jEPV92YMRjn13Y7_tG-8khUu4qTj9USeCrp7nww=s160-c"></div>
+    <p class="channel-name" id="grindName">戇鳩死仆街，屌你老母臭閪冚家鏟</p>
+    <p class="channel-subs" id="grindSubs">28,188,575,987 subscribers</p>
+    <p class="grind-left" id="grindLeft" style="display: block;">Grind time left (rolling 24h): 11h 53m</p>
+    <p class="mode-note" id="modeNote">Website grinding is on: use the buttons below. The Nightbot chat commands are turned off for this channel.</p>
+
+    <div class="rename-row">
+      <input type="text" id="renameInput" class="rename-input" placeholder="New display name (max 30 characters)..." maxlength="30">
+      <button id="renameButton" class="rename-button" type="button"><i class="fa-solid fa-pen"></i> Rename</button>
+    </div>
+
+    <button class="boost-btn" id="boostButton" data-label="Boost">
+      <i class="fa-solid fa-bolt"></i>
+      <span id="boostLabel">Boost</span>
+      <span class="sub">(2m 30s cooldown)</span>
+    </button>
+
+    <p class="section-label spaced">Collab</p>
+    <div class="collab-box" id="collabBox">
+      <div class="collab-row">
+        <input type="text" id="collabInput" class="rename-input" placeholder="Type a channel name or ID..." autocomplete="off" maxlength="80" role="combobox" aria-expanded="false" aria-controls="collabList">
+        <button type="button" id="collabButton" class="collab-btn" data-label="Collab" disabled=""><i class="fa-solid fa-handshake"></i> <span id="collabLabel">Collab</span></button>
+      </div>
+      <ul class="collab-list" id="collabList" role="listbox" style="display: none;"></ul>
+      <p class="collab-hint">Pick a channel to collab with, you both will gain a random amount of subs. A channel can collab once every 10 minutes.</p>
+    </div>
+
+    <p class="section-label spaced">Disstrack</p>
+    <div class="collab-box" id="dissBox">
+      <div class="collab-row">
+        <input type="text" id="dissInput" class="rename-input" placeholder="Type a channel name or ID..." autocomplete="off" maxlength="80" role="combobox" aria-expanded="false" aria-controls="dissList">
+        <button type="button" id="dissButton" class="collab-btn" data-label="Disstrack" disabled=""><i class="fa-solid fa-microphone-lines"></i> <span id="dissLabel">Disstrack</span></button>
+      </div>
+      <ul class="collab-list" id="dissList" role="listbox" style="display: none;"></ul>
+      <p class="collab-hint">Pick a channel to diss, they will lose a random amount of subs. You can drop a disstrack once every 30 minutes, and a channel can only be disstracked once every 30 minutes.</p>
+    </div>
+
+    <p class="section-label spaced">Content commands</p>
+    <div class="command-grid" id="commandGrid"><button type="button" class="command-btn" data-label="Ad"><span class="command-name">Ad</span><span class="command-hint">+34,567</span></button><button type="button" class="command-btn punch" data-label="Album"><span class="command-name">Album</span><span class="command-hint">+85,000</span></button><button type="button" class="command-btn" data-label="Banger Song"><span class="command-name">Banger Song</span><span class="command-hint">+197,000</span></button><button type="button" class="command-btn" data-label="BTS"><span class="command-name">BTS</span><span class="command-hint">+60,000</span></button><button type="button" class="command-btn" data-label="Broadcast"><span class="command-name">Broadcast</span><span class="command-hint">+90,000</span></button><button type="button" class="command-btn" data-label="Challenge"><span class="command-name">Challenge</span><span class="command-hint">+80,000</span></button><button type="button" class="command-btn" data-label="Clip"><span class="command-name">Clip</span><span class="command-hint">+89,000</span></button><button type="button" class="command-btn" data-label="Community Post"><span class="command-name">Community Post</span><span class="command-hint">+120,000</span></button><button type="button" class="command-btn" data-label="Compilation"><span class="command-name">Compilation</span><span class="command-hint">+100,000</span></button><button type="button" class="command-btn" data-label="Cooking"><span class="command-name">Cooking</span><span class="command-hint">+50,000</span></button><button type="button" class="command-btn" data-label="Documentary"><span class="command-name">Documentary</span><span class="command-hint">+30,000</span></button><button type="button" class="command-btn" data-label="Flex"><span class="command-name">Flex</span><span class="command-hint">+12,000</span></button><button type="button" class="command-btn" data-label="Gaming"><span class="command-name">Gaming</span><span class="command-hint">+92,000</span></button><button type="button" class="command-btn" data-label="Highlight"><span class="command-name">Highlight</span><span class="command-hint">+150,000</span></button><button type="button" class="command-btn" data-label="Insane Phonk"><span class="command-name">Insane Phonk</span><span class="command-hint">+250,000</span></button><button type="button" class="command-btn" data-label="Live"><span class="command-name">Live</span><span class="command-hint">+45,000</span></button><button type="button" class="command-btn" data-label="Meme"><span class="command-name">Meme</span><span class="command-hint">+10,000</span></button><button type="button" class="command-btn" data-label="Moai Sigma"><span class="command-name">Moai Sigma</span><span class="command-hint">+400,000</span></button><button type="button" class="command-btn punch" data-label="Music Video"><span class="command-name">Music Video</span><span class="command-hint">+520,000</span></button><button type="button" class="command-btn" data-label="News"><span class="command-name">News</span><span class="command-hint">+120,000</span></button><button type="button" class="command-btn" data-label="Podcast"><span class="command-name">Podcast</span><span class="command-hint">+67,890</span></button><button type="button" class="command-btn" data-label="Premiere"><span class="command-name">Premiere</span><span class="command-hint">+70,000</span></button><button type="button" class="command-btn" data-label="Q&amp;A"><span class="command-name">Q&amp;A</span><span class="command-hint">+95,000</span></button><button type="button" class="command-btn" data-label="Review"><span class="command-name">Review</span><span class="command-hint">+50,000</span></button><button type="button" class="command-btn" data-label="Short"><span class="command-name">Short</span><span class="command-hint">+150,000</span></button><button type="button" class="command-btn" data-label="Sponsor"><span class="command-name">Sponsor</span><span class="command-hint">+10,000</span></button><button type="button" class="command-btn" data-label="Trending"><span class="command-name">Trending</span><span class="command-hint">+190,000</span></button><button type="button" class="command-btn" data-label="Video"><span class="command-name">Video</span><span class="command-hint">+60,000</span></button><button type="button" class="command-btn" data-label="Vlog"><span class="command-name">Vlog</span><span class="command-hint">+98,765</span></button></div>
+
+    <p class="status-line ok" id="statusLine">Music Video sent! Watch your live count below.</p>
+
+    <div class="check-box" id="checkBox" style="display: none;">
+      <p class="auth-hint">Quick check to keep grinding: what's <strong id="checkQuestion">...</strong>?</p>
+      <div class="rename-row">
+        <input type="text" inputmode="numeric" id="checkAnswer" class="rename-input" placeholder="Your answer" autocomplete="off">
+        <button type="button" id="checkSubmit" class="rename-button"><i class="fa-solid fa-check"></i> Verify</button>
+      </div>
+      <p class="status-line" id="checkStatus"></p>
+    </div>
+    <div class="odo" id="odo" role="img" aria-label="Your growth: +1,631,960">
+      <div class="odo-label">Your Realtime growth:</div>
+      <div class="odo-bezel">
+        <div class="odo-window" id="odoWindow">
+          <div class="odo-track" id="odoTrack"><span class="odo-sign">+</span><div class="odo-drum"><div class="odo-strip" style="transition: transform 1960ms cubic-bezier(0.22, 0.8, 0.24, 1) 0s; transform: translateY(-1.3em);"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div></div><span class="odo-sep">,</span><div class="odo-drum"><div class="odo-strip" style="transition: transform 1850ms cubic-bezier(0.22, 0.8, 0.24, 1) 0s; transform: translateY(-7.8em);"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div></div><div class="odo-drum"><div class="odo-strip" style="transition: transform 1740ms cubic-bezier(0.22, 0.8, 0.24, 1) 0s; transform: translateY(-3.9em);"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div></div><div class="odo-drum"><div class="odo-strip" style="transition: transform 1630ms cubic-bezier(0.22, 0.8, 0.24, 1) 0s; transform: translateY(-1.3em);"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div></div><span class="odo-sep">,</span><div class="odo-drum"><div class="odo-strip" style="transition: transform 1520ms cubic-bezier(0.22, 0.8, 0.24, 1) 0s; transform: translateY(-11.7em);"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div></div><div class="odo-drum"><div class="odo-strip" style="transition: transform 1410ms cubic-bezier(0.22, 0.8, 0.24, 1) 0s; transform: translateY(-7.8em);"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div></div><div class="odo-drum"><div class="odo-strip" style="transition: transform 1300ms cubic-bezier(0.22, 0.8, 0.24, 1) 0s; transform: translateY(0em);"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <a class="live-link" id="liveLink" href="https://tnstats.dev/season1/s1subs?fyscChannel=UCjrii0S-8k6sfc_ds3V-mRg" target="_blank" rel="noopener noreferrer">
+      <i class="fa-solid fa-chart-line"></i> View live subcount
+    </a>
+
+    <div class="other-commands">
+      <p class="section-label">Latest updates (1.07.01):</p>
+      <ul>
+        <li><strong></strong>Disstrack is back: pick a channel from the dropdown and it loses subs.</li>
+        <li><strong></strong>New Collab box: pick a channel from the dropdown and you both gain subs.</li>
+        <li><strong></strong>Fixed a bug that caused grinding checks failing to validate the answer.</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="/config.js"></script>
+  <script>
+    // Fetched straight from fysca's public, keyless endpoint (see config.js).
+    const DATA_ENDPOINT = window.FYSC_DATA_URL;
+
+    // POST /web/post/:cid { type, gain } -- same effect as the generic /post
+    // route the deployed Nightbot "2" commands hit directly (e.g. "!ad2" does
+    // FCData[cid].estSubGain += random(0, 45000)), but gated behind a login
+    // for this cid (see requireChannelAuth on the backend). Nightbot's own
+    // commands keep hitting the plain /post route, which is gated by a shared
+    // command key instead once one is configured on the server.
+    // type/gain go in the body rather than the URL -- viewers who opened the
+    // Network tab while a button was clicked could otherwise read e.g.
+    // ".../boost/50000" straight off the request, which gives away that the
+    // count was just manually bumped. The server's GAIN_COMMANDS table is
+    // still what actually decides the amount either way; :gain here is only
+    // for display/cooldown bookkeeping on this page.
+    // Each entry below mirrors one row of GAIN_COMMANDS in server.js (same
+    // :type string, same gain number). The server only accepts :type values
+    // from that table and ignores the gain sent from here, so if a command is
+    // added, renamed or changed there, update the matching entry here too.
+    // The proxy enforces the real limits no matter what this page does: every
+    // command waits COMMAND_COOLDOWN_SECONDS after ANY command on the channel
+    // (not just the same button), boost keeps its own 2m30s wait (and pauses every
+    // other command for BOOST_PAUSE_SECONDS when it goes through), and each
+    // channel has a daily grind-time budget (see grind-proxy). The timers on
+    // this page only mirror that so the buttons don't invite refused clicks.
+    function commandUrl(cid) {
+      return window.FYSC_API_BASE + '/web/post/' + encodeURIComponent(cid);
+    }
+
+    // The login token goes in a header rather than the URL, so it doesn't
+    // end up in server/proxy access logs or browser history.
+    function authHeaders(cid) {
+      return { Authorization: 'Bearer ' + (getStoredToken(cid) || '') };
+    }
+
+    // :type strings must match the keys of GAIN_COMMANDS in server.js exactly
+    // (some are multi-word, e.g. "behind the scenes"). Anything not in that
+    // table is rejected by the server with a 400 "Unknown command."
+    const CONTENT_COMMANDS = [
+      { type: 'ad', gain: 34567, label: 'Ad' },
+      { type: 'album', gain: 85000, label: 'Album' },
+      { type: 'banger song', gain: 197000, label: 'Banger Song' },
+      { type: 'behind the scenes', gain: 60000, label: 'BTS' },
+      { type: 'broadcast', gain: 90000, label: 'Broadcast' },
+      { type: 'challenge video', gain: 80000, label: 'Challenge' },
+      { type: 'clip', gain: 89000, label: 'Clip' },
+      { type: 'community post', gain: 120000, label: 'Community Post' },
+      { type: 'compilation video', gain: 100000, label: 'Compilation' },
+      { type: 'cooking video', gain: 50000, label: 'Cooking' },
+      { type: 'documentary video', gain: 30000, label: 'Documentary' },
+      { type: 'flex', gain: 12000, label: 'Flex' },
+      { type: 'gaming video', gain: 92000, label: 'Gaming' },
+      { type: 'highlight video', gain: 150000, label: 'Highlight' },
+      { type: 'insane phonk song', gain: 250000, label: 'Insane Phonk' },
+      { type: 'live', gain: 45000, label: 'Live' },
+      { type: 'meme', gain: 10000, label: 'Meme' },
+      { type: 'moai sigma video', gain: 400000, label: 'Moai Sigma' },
+      { type: 'music video', gain: 520000, label: 'Music Video' },
+      { type: 'news video', gain: 120000, label: 'News' },
+      { type: 'podcast', gain: 67890, label: 'Podcast' },
+      { type: 'premiere video', gain: 70000, label: 'Premiere' },
+      { type: 'qna video', gain: 95000, label: 'Q&A' },
+      { type: 'review video', gain: 50000, label: 'Review' },
+      { type: 'short', gain: 150000, label: 'Short' },
+      { type: 'sponsor video', gain: 10000, label: 'Sponsor' },
+      { type: 'trending video', gain: 190000, label: 'Trending' },
+      { type: 'video', gain: 60000, label: 'Video' },
+      { type: 'vlog', gain: 98765, label: 'Vlog' }
+    ];
+
+    // The server enforces boost's 2m30s cooldown itself (cooldownMs in
+    // GAIN_COMMANDS); cooldownSeconds here just drives this button's countdown.
+    // Every other button uses COMMAND_COOLDOWN_SECONDS.
+    // The proxy reports its real value via /grind/status (see refreshGrindStatus);
+    // this is the minimum the page uses until then.
+    let COMMAND_COOLDOWN_SECONDS = 4;
+    // Website boost gives up to +1,000,000 (the server's GAIN_COMMANDS.boost.webGain; chat boost stays 250k).
+    // After a boost every other button is paused for BOOST_PAUSE_SECONDS; boost's own cooldown is 2m30s.
+    const BOOST_PAUSE_SECONDS = 10;
+    const BOOST_COMMAND = { type: 'boost', gain: 1000000, label: 'Boost', cooldownSeconds: 150, independent: true };
+    // Collab: the server decides the amount (300k-750k, same for both channels) and keeps a 10 minute
+    // cooldown on both channels; "to" (the picked channel's id) is added when the button is pressed.
+    const MAX_NAME_LENGTH = 30;   // display names; must match MAX_CHANNEL_NAME_LENGTH in server.js
+    const COLLAB_COMMAND = { type: 'collab', gain: 150000, label: 'Collab', cooldownSeconds: 10 * 60 };
+    // Disstrack: like collab you pick a channel ("to"), but it takes subs OFF that channel (the server
+    // decides the amount, 50k-120k) and the chatter's own disstrack has a 30 minute cooldown.
+    const DISSTRACK_COMMAND = { type: 'disstrack music video', gain: 0, label: 'Disstrack', cooldownSeconds: 30 * 60 };
+
+    const STORAGE_KEY = 'fysc_grind_cid';
+    const TOKEN_KEY_PREFIX = 'fysc_grind_token_';
+
+    // One password-only login per channel (no username -- the channel's
+    // own cid is the identity). Tokens are issued by the server for one
+    // specific cid and rejected if replayed against another, so they're
+    // stored per-cid here too rather than as one shared value.
+    function getStoredToken(cid) {
+      try { return localStorage.getItem(TOKEN_KEY_PREFIX + cid); } catch (e) { return null; }
+    }
+    function setStoredToken(cid, token) {
+      try { localStorage.setItem(TOKEN_KEY_PREFIX + cid, token); } catch (e) { /* ignore */ }
+    }
+    function clearStoredToken(cid) {
+      try { localStorage.removeItem(TOKEN_KEY_PREFIX + cid); } catch (e) { /* ignore */ }
+    }
+
+    let allChannels = [];
+    let selectedChannel = null;
+
+    const pickerView = document.getElementById('pickerView');
+    const authView = document.getElementById('authView');
+    const authAvatar = document.getElementById('authAvatar');
+    const authChannelName = document.getElementById('authChannelName');
+    const authHint = document.getElementById('authHint');
+    const authForm = document.getElementById('authForm');
+    const authPasswordInput = document.getElementById('authPasswordInput');
+    const authConfirmInput = document.getElementById('authConfirmInput');
+    const captchaQuestionEl = document.getElementById('captchaQuestion');
+    const captchaAnswerInput = document.getElementById('captchaAnswerInput');
+    const authSubmitButton = document.getElementById('authSubmitButton');
+    const authSubmitLabel = document.getElementById('authSubmitLabel');
+    const authStatusLine = document.getElementById('authStatusLine');
+    const authReclaimLink = document.getElementById('authReclaimLink');
+    const captchaQuestionLabel = document.getElementById('captchaQuestionLabel');
+    const claimBox = document.getElementById('claimBox');
+    const claimCommand = document.getElementById('claimCommand');
+    const claimCopyBtn = document.getElementById('claimCopyBtn');
+    const claimWaitHint = document.getElementById('claimWaitHint');
+    const claimGoogle = document.getElementById('claimGoogle');
+    const claimGoogleBtn = document.getElementById('claimGoogleBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const grindPanel = document.getElementById('grindPanel');
+    const loading = document.getElementById('loading');
+    const emptyState = document.getElementById('emptyState');
+    const channelGrid = document.getElementById('channelGrid');
+    const grindAvatar = document.getElementById('grindAvatar');
+    const grindName = document.getElementById('grindName');
+    const grindSubs = document.getElementById('grindSubs');
+    const renameInput = document.getElementById('renameInput');
+    const renameButton = document.getElementById('renameButton');
+    const boostButton = document.getElementById('boostButton');
+    const commandGrid = document.getElementById('commandGrid');
+    const statusLine = document.getElementById('statusLine');
+    const liveLink = document.getElementById('liveLink');
+    const grindLeft = document.getElementById('grindLeft');
+    const modeToggle = document.getElementById('modeToggle');
+    const modeLabel = document.getElementById('modeLabel');
+    const modeNote = document.getElementById('modeNote');
+    const checkBox = document.getElementById('checkBox');
+    const checkQuestion = document.getElementById('checkQuestion');
+    const checkAnswer = document.getElementById('checkAnswer');
+    const checkSubmit = document.getElementById('checkSubmit');
+    const checkStatus = document.getElementById('checkStatus');
+    const odo = document.getElementById('odo');
+    const odoWindow = document.getElementById('odoWindow');
+    const odoTrack = document.getElementById('odoTrack');
+
+    function formatNumber(num) {
+      return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function initials(name) {
+      return name.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+
+    // Normalises an avatar URL so it can load on an https page: an http://
+    // link is blocked as mixed content (upgrade it), and a protocol-relative
+    // //host/... link is given an explicit scheme.
+    function avatarUrl(u, px) {
+      if (!u) return null;
+      u = String(u).trim();
+      if (u.indexOf('//') === 0) u = 'https:' + u;
+      if (/^http:\/\//i.test(u)) u = 'https://' + u.slice(7);
+      // YouTube/Google avatar links end in a size, usually the full 800px
+      // picture. Ask for one just big enough for where it's shown (2x for
+      // sharp screens) -- a few KB instead of 50-100 KB each, which is what
+      // made the list crawl when hundreds loaded at once.
+      if (/^https:\/\/(yt3\.ggpht\.com|yt3\.googleusercontent\.com|lh\d\.googleusercontent\.com)\//i.test(u)) {
+        u = u.replace(/=s\d+[^/?#]*$/, '=s' + px + '-c').replace(/=w\d+-h\d+[^/?#]*$/, '=s' + px + '-c');
+      }
+      return u;
+    }
+
+    function setAvatar(el, channel, px) {
+      el.innerHTML = '';
+      const url = avatarUrl(channel.cimage, px || 96);
+      if (url) {
+        const img = document.createElement('img');
+        // Some image hosts refuse requests carrying another site's Referer
+        // (hotlink protection); sending none avoids that.
+        img.referrerPolicy = 'no-referrer';
+        img.decoding = 'async';
+        img.loading = 'lazy';   // only fetch avatars that are actually on screen
+        img.alt = channel.cname;
+        img.onerror = () => {
+          console.warn('Avatar failed to load:', url);
+          el.textContent = initials(channel.cname);
+        };
+        img.src = url;
+        el.appendChild(img);
+      } else {
+        el.textContent = initials(channel.cname);
+      }
+    }
+
+    // The list can hold thousands of channels. Building a card (with an avatar) for every one of them
+    // in one go is what used to freeze the page -- when it first loaded, when searching, and when a
+    // channel was clicked (hiding that many elements). Now only the first PAGE_SIZE matches are drawn,
+    // "Show more" draws the next batch, and clicks are handled by ONE listener on the grid.
+    const PAGE_SIZE = 60;
+    const moreRow = document.getElementById('moreRow');
+    let shownList = [];     // everything that matches the current search
+    let shownCount = 0;     // how many of those have a card right now
+
+    function makeCard(channel, index) {
+      const card = document.createElement('button');
+      card.className = 'pick-card';
+      card.type = 'button';
+      card.dataset.idx = index;
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar';
+      setAvatar(avatar, channel, 96);
+
+      const info = document.createElement('div');
+      const name = document.createElement('div');
+      name.className = 'name';
+      name.textContent = channel.cname;
+      const subs = document.createElement('div');
+      subs.className = 'subs';
+      subs.textContent = formatNumber(channel.subscriberCountRealAPI) + ' subs';
+      const cid = document.createElement('div');
+      cid.className = 'cid';
+      cid.textContent = channel.cid;
+      info.appendChild(name);
+      info.appendChild(subs);
+      info.appendChild(cid);
+
+      card.appendChild(avatar);
+      card.appendChild(info);
+      return card;
+    }
+
+    function drawMore() {
+      const end = Math.min(shownCount + PAGE_SIZE, shownList.length);
+      const frag = document.createDocumentFragment();
+      for (let i = shownCount; i < end; i++) frag.appendChild(makeCard(shownList[i], i));
+      channelGrid.appendChild(frag);
+      shownCount = end;
+      moreRow.style.display = shownCount < shownList.length ? 'flex' : 'none';
+      document.getElementById('moreButton').textContent = 'Show more channels (' + (shownList.length - shownCount) + ' left)';
+    }
+
+    function displayChannels(channels) {
+      channelGrid.textContent = '';
+      shownList = channels;
+      shownCount = 0;
+
+      if (channels.length === 0) {
+        emptyState.style.display = 'block';
+        moreRow.style.display = 'none';
+        return;
+      }
+      emptyState.style.display = 'none';
+      drawMore();
+    }
+
+    channelGrid.addEventListener('click', (e) => {
+      const card = e.target.closest('.pick-card');
+      if (!card) return;
+      const channel = shownList[parseInt(card.dataset.idx, 10)];
+      if (channel) selectChannel(channel);
+    });
+    document.getElementById('moreButton').addEventListener('click', drawMore);
+
+    // Matches by display name OR channel ID -- names collide/are hard to
+    // recall exactly, but a channel ID is unique, so pasting it in is a
+    // reliable way to jump straight to your own channel in a long list.
+    // The lowercase search text of each channel is built once (c._key), not on every keystroke.
+    function searchChannels() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      if (!query) return displayChannels(allChannels);
+      displayChannels(allChannels.filter(channel => channel._key.indexOf(query) !== -1));
+    }
+
+    let searchTimer = 0;
+    document.getElementById('searchButton').addEventListener('click', searchChannels);
+    document.getElementById('searchInput').addEventListener('input', () => {   // search while typing, once typing pauses
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(searchChannels, 150);
+    });
+    document.getElementById('searchInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { clearTimeout(searchTimer); searchChannels(); }
+    });
+
+    function setStatus(text, kind) {
+      statusLine.textContent = text;
+      statusLine.className = 'status-line' + (kind ? ' ' + kind : '');
+    }
+
+    // ---- cooldown locks ----
+    // Clicking a command below locks every OTHER command button for
+    // COMMAND_COOLDOWN_SECONDS (the proxy enforces the same rule per channel). The
+    // clicked button also counts its own cooldown down on its label.
+    // Boost is separate: it has its own 2m30s cooldown, clicking it locks only the
+    // boost button (not the others), and the shared cooldown doesn't lock it. Only the
+    // daily grind limit locks everything, boost included.
+    const commandButtons = [];   // every command button, boost included
+    let globalLockUntil = 0;     // ms timestamp: the shared cooldown (all but boost)
+    let limitLockUntil = 0;      // ms timestamp: daily limit reached (all buttons)
+    let pauseLockUntil = 0;      // ms timestamp: post-boost pause (all but boost); shown as a countdown on the buttons
+    let lockTimer = null;
+    let checkOpen = false;
+    let grindMode = 'chat';       // 'chat' (Nightbot commands) or 'website' (these buttons); the server decides, chat is the default        // the server wants a quick human check: every button waits for it
+
+    function fmtCountdown(sec) {
+      if (sec >= 3600) return Math.floor(sec / 3600) + 'h ' + Math.floor((sec % 3600) / 60) + 'm';
+      if (sec >= 60) return Math.floor(sec / 60) + 'm ' + String(sec % 60).padStart(2, '0') + 's';
+      return sec + 's';
+    }
+
+    function refreshLocks() {
+      const now = Date.now();
+      let anyLocked = false;
+      commandButtons.forEach(btn => {
+        // a button's label counts down its own cooldown, or the post-boost pause if that is longer
+        const pauseLeft = btn._independent ? 0 : pauseLockUntil - now;
+        const own = Math.max(btn._ownLockUntil - now, pauseLeft);
+        const label = btn._labelEl;
+        if (own > 0) label.textContent = fmtCountdown(Math.ceil(own / 1000));
+        else if (label.textContent !== btn.dataset.label) label.textContent = btn.dataset.label;
+        const shared = !btn._independent && globalLockUntil > now;
+        const locked = own > 0 || shared || limitLockUntil > now || btn._busy || checkOpen || grindMode !== 'website' || (btn._needsTarget && !btn._hasTarget());
+        btn.disabled = locked;
+        if (own > 0 || shared || limitLockUntil > now) anyLocked = true;
+      });
+      if (!anyLocked && !checkOpen && !commandButtons.some(b => b._busy)) {
+        clearInterval(lockTimer);
+        lockTimer = null;
+      }
+    }
+
+    function ensureLockTimer() {
+      refreshLocks();
+      if (!lockTimer) lockTimer = setInterval(refreshLocks, 250);
+    }
+
+    function lockAll(seconds) {
+      globalLockUntil = Math.max(globalLockUntil, Date.now() + seconds * 1000);
+      ensureLockTimer();
+    }
+
+    // post-boost pause: locks every non-boost button AND shows the countdown on their labels
+    function lockPause(seconds) {
+      pauseLockUntil = Math.max(pauseLockUntil, Date.now() + seconds * 1000);
+      lockAll(seconds);
+    }
+
+    function lockButton(btn, seconds) {
+      btn._ownLockUntil = Date.now() + seconds * 1000;
+      ensureLockTimer();
+    }
+
+    function lockLimit(seconds) {
+      limitLockUntil = Math.max(limitLockUntil, Date.now() + seconds * 1000);
+      ensureLockTimer();
+    }
+
+    function releaseAll() {
+      globalLockUntil = 0;
+      ensureLockTimer();
+    }
+
+    // ---- daily grind-time budget (shown from the proxy's /grind/status/:cid) ----
+    function showGrindLeft(remainingMs, limitMs) {
+      if (remainingMs === null || remainingMs === undefined || !limitMs) { grindLeft.style.display = 'none'; return; }
+      const min = Math.floor(remainingMs / 60000);
+      grindLeft.textContent = 'Grind time left (rolling 24h): ' + (min >= 60 ? Math.floor(min / 60) + 'h ' + (min % 60) + 'm' : min + 'm');
+      grindLeft.classList.toggle('low', remainingMs < limitMs * 0.1);
+      grindLeft.style.display = 'block';
+    }
+
+    async function refreshGrindStatus(channel) {
+      try {
+        const response = await fetch(window.FYSC_API_BASE + '/grind/status/' + encodeURIComponent(channel.cid));
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        if (selectedChannel !== channel) return;
+        if (data.cooldownSeconds > 0) COMMAND_COOLDOWN_SECONDS = Math.max(4, Math.ceil(data.cooldownSeconds));
+        showGrindLeft(data.remainingMs, data.limitMs);
+        if (data.blockedForMs > 0) {
+          lockLimit(Math.ceil(data.blockedForMs / 1000));
+          setStatus('Daily grind limit reached. You can grind again in ' + fmtCountdown(Math.ceil(data.blockedForMs / 1000)) + '.', 'err');
+        } else if (data.cooldownMs > 0) {
+          const waitSec = Math.ceil(data.cooldownMs / 1000);
+          if (waitSec > COMMAND_COOLDOWN_SECONDS) lockPause(waitSec);   // longer than the normal wait = the post-boost pause
+          else lockAll(waitSec);
+        }
+      } catch (e) {
+        grindLeft.style.display = 'none';   // older proxy without limits: just don't show it
+      }
+    }
+
+    // ---- growth odometer: rolling digit drums, fed by the proxy's /public/growth/:cid ----
+    // The proxy reads the number from the private server and hands back just that number.
+    // Each digit is a drum (a strip 0-9-0-9) that rolls to its new digit, like a mechanical counter.
+    const ODO_H = 1.3;            // drum height in em (matches .odo-drum)
+    let odoCols = [];             // left -> right: { el, strip, idx, timer }
+    let odoValue = 0;
+    let odoSign = '';
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function odoMakeCol() {
+      const el = document.createElement('div');
+      el.className = 'odo-drum';
+      const strip = document.createElement('div');
+      strip.className = 'odo-strip';
+      for (let k = 0; k < 20; k++) {
+        const d = document.createElement('span');
+        d.textContent = String(k % 10);
+        strip.appendChild(d);
+      }
+      el.appendChild(strip);
+      return { el: el, strip: strip, idx: 0, timer: 0 };
+    }
+
+    function odoPlace(col, d) {   // jump, no animation
+      clearTimeout(col.timer); col.timer = 0;
+      col.strip.style.transition = 'none';
+      col.strip.style.transform = 'translateY(' + (-d * ODO_H) + 'em)';
+      col.idx = d;
+    }
+
+    function odoRoll(col, d, up, dur) {
+      if (col.timer) { clearTimeout(col.timer); col.timer = 0; odoPlace(col, col.idx); void col.strip.offsetWidth; }
+      if (d === col.idx) return;
+      if (reduceMotion) return odoPlace(col, d);
+      // counting up past 9 keeps rolling forward onto the second 0-9 run, then snaps back unseen
+      const wrap = up && d < col.idx;
+      const target = wrap ? 10 + d : d;
+      col.strip.style.transition = 'transform ' + dur + 'ms cubic-bezier(0.22, 0.8, 0.24, 1)';
+      col.strip.style.transform = 'translateY(' + (-target * ODO_H) + 'em)';
+      col.idx = d;
+      if (wrap) col.timer = setTimeout(() => { col.timer = 0; odoPlace(col, d); }, dur + 40);
+    }
+
+    // rebuild the row only when the number of digits (or the sign) changes
+    function odoLayout(len, sign) {
+      if (odoCols.length === len && odoSign === sign && odoTrack.firstChild) return;
+      while (odoCols.length < len) odoCols.unshift(odoMakeCol());
+      while (odoCols.length > len) odoCols.shift();
+      odoTrack.innerHTML = '';
+      if (sign) {
+        const sg = document.createElement('span');
+        sg.className = 'odo-sign';
+        sg.textContent = sign;
+        odoTrack.appendChild(sg);
+      }
+      odoCols.forEach((col, i) => {
+        if (i > 0 && (len - i) % 3 === 0) {
+          const sep = document.createElement('span');
+          sep.className = 'odo-sep';
+          sep.textContent = ',';
+          odoTrack.appendChild(sep);
+        }
+        odoTrack.appendChild(col.el);
+      });
+      odoSign = sign;
+      odoWindow.classList.toggle('long', len > 9);
+      void odoTrack.offsetWidth;
+    }
+
+    function setOdometer(n, instant) {
+      n = Math.round(Number(n) || 0);
+      const digits = String(Math.abs(n)).split('');
+      const sign = n > 0 ? '+' : (n < 0 ? '\u2212' : '');
+      const up = n >= odoValue;
+      odoLayout(digits.length, sign);
+      odoCols.forEach((col, i) => {
+        const d = parseInt(digits[i], 10);
+        const changed = d !== col.idx;
+        if (instant) { odoPlace(col, d); return; }
+        odoRoll(col, d, up, 1300 + (digits.length - 1 - i) * 110);   // left drums settle last
+        if (changed) {   // digits that moved glow green (up) or red (down), then fade back to white
+          col.el.classList.toggle('odo-up', up);
+          col.el.classList.toggle('odo-down', !up);
+          clearTimeout(col.tint);
+          col.tint = setTimeout(() => col.el.classList.remove('odo-up', 'odo-down'), 3000);
+        }
+      });
+      odoValue = n;
+      odo.setAttribute('aria-label', 'Your growth: ' + (n > 0 ? '+' : '') + n.toLocaleString());
+    }
+
+    let growthShown = null;
+    async function refreshGrowth(channel) {
+      try {
+        const response = await fetch(window.FYSC_API_BASE + '/public/growth/' + encodeURIComponent(channel.cid));
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        if (selectedChannel !== channel) return;
+        const n = Number(data.subGainMax);
+        growthShown = Number.isFinite(n) ? n : 0;
+        setOdometer(growthShown, false);
+      } catch (e) {
+        // keep whatever is showing; the next refresh tries again
+      }
+    }
+    // keep it fresh while the grind panel is open and the tab is visible
+    setInterval(() => {
+      if (selectedChannel && grindPanel.style.display === 'flex' && !document.hidden) refreshGrowth(selectedChannel);
+    }, 20000);
+
+    // The proxy answers 429 with {kind: 'cooldown'|'daily', retryAfterSeconds}; the
+    // FYSC server's own per-command cooldown answers 429 with plain text ("... 42s ...").
+    function parseLimit(text, fallbackSeconds) {
+      try {
+        const j = JSON.parse(text);
+        if (j && j.kind) return { kind: j.kind, seconds: Math.max(1, j.retryAfterSeconds | 0), message: j.message };
+      } catch (e) { /* plain text */ }
+      const match = text.match(/(\d+)s/);
+      const seconds = match ? parseInt(match[1], 10) : fallbackSeconds;
+      // "Too many grinds this minute. Try again in 12s." = the server's per-minute cap for the whole channel
+      if (/too many grinds|too fast/i.test(text)) return { kind: 'rate', seconds: seconds, message: text };
+      return { kind: 'cooldown', seconds: seconds };
+    }
+
+    // A command that didn't go through hands back the shared lock it took (boost never took it).
+    function releaseCommand(cmd) {
+      if (cmd.independent) ensureLockTimer(); else releaseAll();
+    }
+
+    // ---- grinding method: chat or website ----
+    // A channel grinds either from chat (the Nightbot commands) or from these buttons, never both.
+    // The choice is stored by the server per channel; chat is the default. In chat mode the buttons
+    // below stay switched off, and in website mode the chat commands stop working.
+    function setMode(mode) {
+      grindMode = mode === 'website' ? 'website' : 'chat';
+      modeLabel.textContent = grindMode === 'website' ? 'Website' : 'Chat';
+      if (grindMode === 'website') {
+        modeNote.className = 'mode-note';
+        modeNote.textContent = 'Website grinding is on: use the buttons below. The Nightbot chat commands are turned off for this channel.';
+      } else {
+        modeNote.className = 'mode-note chat';
+        modeNote.textContent = 'Chat grinding is on: use the Nightbot commands in chat. Switch the grinding method to Website to use the buttons below.';
+      }
+      ensureLockTimer();
+    }
+
+    async function loadMode(channel) {
+      try {
+        const response = await fetch(window.FYSC_API_BASE + '/grind-mode/' + encodeURIComponent(channel.cid));
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        if (selectedChannel === channel) setMode(data.mode);
+      } catch (e) {
+        console.error('Grinding method lookup failed:', e);
+        if (selectedChannel === channel) setMode('chat');
+      }
+    }
+
+    modeToggle.addEventListener('click', async () => {
+      if (!selectedChannel) return;
+      const channel = selectedChannel;
+      const wanted = grindMode === 'website' ? 'chat' : 'website';
+      modeToggle.disabled = true;
+      try {
+        const response = await fetch(window.FYSC_API_BASE + '/web/grind-mode/' + encodeURIComponent(channel.cid), {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders(channel.cid)),
+          body: JSON.stringify({ mode: wanted })
+        });
+        const text = await response.text();
+        if (response.status === 401 || response.status === 403) {
+          clearStoredToken(channel.cid);
+          setStatus('Your login expired. Log in again.', 'err');
+          showAuthView(channel);
+          return;
+        }
+        if (!response.ok) {
+          setStatus(response.status === 429 ? 'Slow down, try again in a second.' : "Couldn't switch the grinding method. Try again.", 'err');
+          return;
+        }
+        if (selectedChannel === channel) {
+          setMode(JSON.parse(text).mode);
+          setStatus(grindMode === 'website' ? 'Grinding method: Website. The chat commands are now off.' : 'Grinding method: Chat. The buttons are now off.', 'ok');
+        }
+      } catch (e) {
+        console.error('Grinding method switch failed:', e);
+        setStatus("Couldn't reach the server. Try again.", 'err');
+      } finally {
+        modeToggle.disabled = false;
+      }
+    });
+
+    // ---- human check ----
+    // Every so often (or if the clicking looks automated) the server answers 428 and wants a
+    // quick sum answered before it takes more commands. Show it, send the answer to
+    // /web/grind-check/:cid, then send the command that was interrupted.
+    let pendingCheck = null;   // { cmd, btn, token }
+
+    async function loadCheckQuestion() {
+      checkAnswer.value = '';
+      checkQuestion.textContent = '...';
+      try {
+        const response = await fetch(window.FYSC_API_BASE + '/auth/captcha');
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        if (pendingCheck) pendingCheck.token = data.token;
+        checkQuestion.textContent = data.question;
+      } catch (e) {
+        console.error('Check question failed:', e);
+        checkQuestion.textContent = '?';
+        checkStatus.textContent = "Couldn't load the question. Try again in a moment.";
+        checkStatus.className = 'status-line err';
+      }
+    }
+
+    function showCheck(cmd, btn) {
+      pendingCheck = { cmd: cmd, btn: btn, token: null };
+      checkOpen = true;
+      checkBox.style.display = 'block';
+      checkStatus.textContent = '';
+      checkStatus.className = 'status-line';
+      ensureLockTimer();
+      setStatus('Quick check needed before you can keep grinding.', 'wait');
+      loadCheckQuestion().then(() => checkAnswer.focus());
+    }
+
+    function hideCheck() {
+      pendingCheck = null;
+      checkOpen = false;
+      checkBox.style.display = 'none';
+      ensureLockTimer();
+    }
+
+    async function submitCheck() {
+      if (!pendingCheck || !selectedChannel) return;
+      const channel = selectedChannel;
+      const answer = checkAnswer.value.trim();
+      if (!answer) { checkStatus.textContent = 'Type your answer first.'; checkStatus.className = 'status-line err'; return; }
+      if (!pendingCheck.token) { await loadCheckQuestion(); return; }
+      checkSubmit.disabled = true;
+      checkStatus.textContent = 'Checking...';
+      checkStatus.className = 'status-line wait';
+      try {
+        const response = await fetch(window.FYSC_API_BASE + '/web/grind-check/' + encodeURIComponent(channel.cid), {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders(channel.cid)),
+          body: JSON.stringify({ captchaToken: pendingCheck.token, captchaAnswer: answer })
+        });
+        const text = await response.text();
+        if (response.status === 401 || response.status === 403) {
+          clearStoredToken(channel.cid);
+          hideCheck();
+          setStatus('Your login expired. Log in again.', 'err');
+          showAuthView(channel);
+          return;
+        }
+        if (!response.ok) {   // wrong answer: the server wants a fresh question
+          checkStatus.textContent = response.status === 400 ? 'Wrong answer, try the new question.' : 'Something went wrong. Try again.';
+          checkStatus.className = 'status-line err';
+          await loadCheckQuestion();
+          return;
+        }
+        const retry = pendingCheck;
+        hideCheck();
+        setStatus('Verified! Sending ' + retry.cmd.label + '...', 'ok');
+        setTimeout(() => { if (selectedChannel === channel && !retry.btn.disabled) doCommand(retry.cmd, retry.btn); }, 60);
+      } catch (e) {
+        console.error('Check request failed:', e);
+        checkStatus.textContent = "Couldn't reach the server. Try again.";
+        checkStatus.className = 'status-line err';
+      } finally {
+        checkSubmit.disabled = false;
+      }
+    }
+
+    checkSubmit.addEventListener('click', submitCheck);
+    checkAnswer.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitCheck(); });
+
+    // Says what actually went wrong (with the HTTP code, so a bug report can include it).
+    const PAGE_VERSION = 'p7';   // shown in error messages so a bug report says which copy of the page it came from
+    function failureMessage(status, text) {
+      // what the server said, in a few plain words (HTML error pages from a firewall/CDN are shortened)
+      const said = String(text || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 70);
+      const code = ' (HTTP ' + status + (said ? ': ' + said : '') + ', ' + PAGE_VERSION + ')';
+      if (status === 400) return 'That command is not available any more. Refresh the page (Ctrl+F5) and try again.' + code;
+      if (status === 404) return "The server couldn't find this channel or command. Refresh the page and try again." + code;
+      if (status >= 500) return 'The server is busy or restarting. Wait a few seconds and try again.' + code;
+      return 'Something went wrong. Try again.' + code;
+    }
+
+    // The green "you gained" box at the top of the panel (boost and collab).
+    const gainBanner = document.getElementById('gainBanner');
+    const GAIN_BANNER_SECONDS = 5;   // the green box (and the green status text under the buttons) goes away after this long
+    let gainHideTimer = 0;
+    function showGain(title, amount) {
+      document.getElementById('gainTitle').textContent = title;
+      document.getElementById('gainAmount').textContent = (amount < 0 ? '\u2212' : '+') + formatNumber(Math.abs(amount));
+      gainBanner.style.display = 'block';
+      gainBanner.style.animation = 'none'; void gainBanner.offsetWidth; gainBanner.style.animation = '';
+      clearTimeout(gainHideTimer);   // a new click restarts the 5 seconds
+      gainHideTimer = setTimeout(hideGain, GAIN_BANNER_SECONDS * 1000);
+    }
+    function hideGain() { clearTimeout(gainHideTimer); gainBanner.style.display = 'none'; }
+    // Clears the green "sent!" line after 5 seconds -- but only if nothing else has replaced it since.
+    let statusClearTimer = 0;
+    function autoClearStatus(text) {
+      clearTimeout(statusClearTimer);
+      statusClearTimer = setTimeout(() => {
+        if (statusLine.textContent === text && statusLine.classList.contains('ok')) setStatus('', '');
+      }, GAIN_BANNER_SECONDS * 1000);
+    }
+
+    async function doCommand(cmd, btn) {
+      if (!selectedChannel || btn.disabled) return;
+      btn.classList.remove('punch');
+      void btn.offsetWidth; // restart the punch animation on repeat clicks
+      btn.classList.add('punch');
+      // lock everything right away so a fast double-click can't send two
+      btn._busy = true;
+      if (!cmd.independent) lockAll(COMMAND_COOLDOWN_SECONDS);
+      ensureLockTimer();
+      setStatus('Sending ' + cmd.label + '...', 'wait');
+      const channel = selectedChannel;
+
+      try {
+        const response = await fetch(commandUrl(channel.cid), {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders(channel.cid)),
+          body: JSON.stringify(Object.assign({ type: cmd.type, gain: cmd.gain }, cmd.extra || {}))
+        });
+        const text = await response.text();
+        btn._busy = false;
+
+        if (response.status === 422) {   // the server refused this one (collab/disstrack: no such channel / on cooldown)
+          releaseCommand(cmd);
+          setStatus(text || "That didn't work.", 'err');
+          const own = text.match(/^Your (?:collab|disstrack) is on cooldown.*?(?:(\d+)m\s*)?(\d+)s/);
+          if (own) lockButton(btn, (parseInt(own[1] || '0', 10) * 60) + parseInt(own[2], 10));
+          return;
+        }
+
+        if (response.status === 429) {
+          const limit = parseLimit(text, COMMAND_COOLDOWN_SECONDS);
+          if (limit.kind === 'rate') {   // the whole channel is going too fast for this minute: everything waits
+            lockLimit(limit.seconds);
+            setStatus(limit.message || ('Too many grinds this minute. Try again in ' + fmtCountdown(limit.seconds) + '.'), 'wait');
+            return;
+          }
+          if (limit.kind === 'pause') {   // a boost just went through: every other button waits
+            lockPause(limit.seconds);
+            setStatus(limit.message || ('Commands are paused after a boost. Try again in ' + fmtCountdown(limit.seconds) + '.'), 'wait');
+            return;
+          }
+          if (limit.kind === 'daily') {
+            lockLimit(limit.seconds);
+            setStatus(limit.message || ('Daily grind limit reached. Try again in ' + fmtCountdown(limit.seconds) + '.'), 'err');
+            refreshGrindStatus(channel);
+            return;
+          }
+          setStatus(cmd.label + ' is on cooldown - try again in ' + fmtCountdown(limit.seconds), 'wait');
+          // boost only ever waits on itself; for the others, a short wait is the shared
+          // cooldown (everything waits) and a long one is that command's own cooldown
+          if (cmd.independent) { lockButton(btn, limit.seconds); return; }
+          lockAll(Math.min(limit.seconds, COMMAND_COOLDOWN_SECONDS));
+          if (limit.seconds > COMMAND_COOLDOWN_SECONDS) lockButton(btn, limit.seconds);
+          return;
+        }
+
+        if (response.status === 409) {   // the server says this channel is on chat grinding
+          releaseCommand(cmd);
+          setMode('chat');
+          setStatus('Chat grinding is on for this channel. Switch the grinding method to Website to use the buttons.', 'err');
+          return;
+        }
+
+        if (response.status === 428) {   // the server wants a quick human check first
+          releaseCommand(cmd);
+          showCheck(cmd, btn);
+          return;
+        }
+
+        if (response.status === 401 || response.status === 403) {
+          clearStoredToken(channel.cid);
+          releaseCommand(cmd);
+          setStatus('Your login expired. Log in again.', 'err');
+          showAuthView(channel);
+          return;
+        }
+
+        if (text.indexOf('not in the system') !== -1) {
+          releaseCommand(cmd);
+          setStatus("This channel isn't registered yet.", 'err');
+          return;
+        }
+
+        if (!response.ok) {
+          releaseCommand(cmd);
+          console.error('Command failed: HTTP ' + response.status, text.slice(0, 300));
+          setStatus(failureMessage(response.status, text), 'err');
+          return;
+        }
+
+        let result = null;
+        try { result = JSON.parse(text); } catch (e) { /* older server: plain text, no amount to show */ }
+        if (cmd.type === 'disstrack music video' && result && Number.isFinite(Number(result.loss))) {
+          showGain('Disstrack on ' + (result.target || 'that channel') + ' \u2014 they lost', -result.loss);
+          const dissMsg = 'Disstrack dropped on ' + (result.target || 'that channel') + '! They lost ' + formatNumber(result.loss) + ' subs.';
+          setStatus(dissMsg, 'ok');
+          autoClearStatus(dissMsg);
+        } else
+        if (result && Number.isFinite(Number(result.gain))) {
+          if (cmd.type === 'collab') {
+            // the server now pays a collab out gradually, so say "gaining" and for how long
+            const dripMin = Math.max(1, Math.round((Number(result.dripMs) || 300000) / 60000));
+            showGain('Collab with ' + (result.with || 'that channel') + ' \u2014 you both are gaining', result.gain);
+            const collabMsg = 'Collab started with ' + (result.with || 'that channel') + '! Both channels will gain +' + formatNumber(result.gain) + 'subs';
+            setStatus(collabMsg, 'ok');
+            autoClearStatus(collabMsg);
+          } else {
+            showGain(cmd.label + ' gained', result.gain);
+            const okMsg = cmd.label + ' sent! You gained +' + formatNumber(result.gain) + '.';
+            setStatus(okMsg, 'ok');
+            autoClearStatus(okMsg);
+          }
+        } else {
+          setStatus(cmd.label + ' sent! Watch your live count below.', 'ok');
+        }
+        if (cmd.type === 'boost') lockPause(BOOST_PAUSE_SECONDS);   // pause every other command for 10s
+        else if (!cmd.independent) lockAll(COMMAND_COOLDOWN_SECONDS);
+        lockButton(btn, cmd.cooldownSeconds || COMMAND_COOLDOWN_SECONDS);
+        refreshGrindStatus(channel);
+        refreshGrowth(channel);
+      } catch (err) {
+        console.error('Command request failed:', err);
+        btn._busy = false;
+        releaseCommand(cmd);
+        setStatus("Couldn't reach the server. Try again.", 'err');
+      }
+    }
+
+    const MAINTENANCE_TEXT = 'This cmd is in maintenance, try again soon.';
+
+    function createCommandButton(cmd) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'command-btn';
+      btn.dataset.label = cmd.label;
+
+      const name = document.createElement('span');
+      name.className = 'command-name';
+      name.textContent = cmd.label;
+
+      const hint = document.createElement('span');
+      hint.className = 'command-hint';
+      hint.textContent = '+' + formatNumber(cmd.gain);
+
+      btn.appendChild(name);
+      btn.appendChild(hint);
+      btn._labelEl = name;
+      btn._ownLockUntil = 0;
+      btn._busy = false;
+      if (cmd.maintenance) {
+        // Not disabled for real (a disabled button gets no hover or click), just grayed out.
+        // It stays out of commandButtons so the cooldown timer never re-enables it.
+        btn.classList.add('maintenance');
+        btn.setAttribute('aria-disabled', 'true');
+        btn.title = MAINTENANCE_TEXT;
+        btn.addEventListener('mouseenter', () => setStatus(MAINTENANCE_TEXT, 'wait'));
+        btn.addEventListener('click', () => setStatus(MAINTENANCE_TEXT, 'err'));
+        return btn;
+      }
+      commandButtons.push(btn);
+      btn.addEventListener('click', () => doCommand(cmd, btn));
+      return btn;
+    }
+
+    CONTENT_COMMANDS.forEach(cmd => commandGrid.appendChild(createCommandButton(cmd)));
+
+    boostButton.dataset.label = 'Boost';
+    const boostLabel = document.getElementById('boostLabel');
+    boostButton._labelEl = boostLabel;
+    boostButton._ownLockUntil = 0;
+    boostButton._busy = false;
+    boostButton._independent = true;   // not locked by (and doesn't lock) the other buttons' shared cooldown
+    commandButtons.push(boostButton);
+    boostButton.addEventListener('click', () => doCommand(BOOST_COMMAND, boostButton));
+
+    // ---- collab + disstrack: type a name, pick a channel from the dropdown, press the button ----
+    // One picker per box (same markup, same behaviour); only the command that gets sent differs.
+    function createTargetPicker(o) {
+      const input = document.getElementById(o.inputId);
+      const list = document.getElementById(o.listId);
+      const button = document.getElementById(o.buttonId);
+      const box = document.getElementById(o.boxId);
+      let target = null;     // the channel picked from the dropdown
+      let active = -1;       // highlighted row (arrow keys)
+      let matches = [];
+      let timer = 0;
+
+      button.dataset.label = o.label;
+      button._labelEl = document.getElementById(o.labelId);
+      button._ownLockUntil = 0;
+      button._busy = false;
+      button._needsTarget = true;
+      button._hasTarget = () => !!target;
+      commandButtons.push(button);
+      button.addEventListener('click', () => {
+        if (!target) return;
+        doCommand(Object.assign({}, o.command, { extra: { to: target.cid } }), button);
+      });
+
+      function closeList() {
+        list.style.display = 'none';
+        input.setAttribute('aria-expanded', 'false');
+        active = -1;
+      }
+
+      function reset() {
+        target = null;
+        input.value = '';
+        closeList();
+        ensureLockTimer();
+      }
+
+      function pick(channel) {
+        target = channel;
+        input.value = channel.cname;
+        closeList();
+        ensureLockTimer();
+      }
+
+      function renderList() {
+        const q = input.value.toLowerCase().trim();
+        const myCid = selectedChannel ? selectedChannel.cid : '';
+        matches = [];
+        // stop at 8 matches -- never builds a row per channel
+        for (let i = 0; i < allChannels.length && matches.length < 8; i++) {
+          const c = allChannels[i];
+          if (c.cid === myCid) continue;
+          if (!q || c._key.indexOf(q) !== -1) matches.push(c);
+        }
+        list.innerHTML = '';
+        if (!matches.length) {
+          const li = document.createElement('li');
+          li.className = 'opt-empty';
+          li.textContent = 'No channel found';
+          list.appendChild(li);
+        }
+        matches.forEach((c, idx) => {
+          const li = document.createElement('li');
+          li.setAttribute('role', 'option');
+          li.dataset.idx = idx;
+          const n = document.createElement('span'); n.className = 'opt-name'; n.textContent = c.cname;
+          const sb = document.createElement('span'); sb.className = 'opt-subs'; sb.textContent = formatNumber(c.subscriberCountRealAPI) + ' subs';
+          li.appendChild(n); li.appendChild(sb);
+          list.appendChild(li);
+        });
+        active = -1;
+        list.style.display = 'block';
+        input.setAttribute('aria-expanded', 'true');
+      }
+
+      input.addEventListener('input', () => {
+        if (target) { target = null; ensureLockTimer(); }   // typing again un-picks the channel
+        clearTimeout(timer);
+        timer = setTimeout(renderList, 80);
+      });
+      input.addEventListener('focus', () => { if (!target) renderList(); });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          if (list.style.display !== 'block') renderList();
+          e.preventDefault();
+          const rowsNow = list.querySelectorAll('li[data-idx]');
+          if (!rowsNow.length) return;
+          active = (active + (e.key === 'ArrowDown' ? 1 : -1) + rowsNow.length) % rowsNow.length;
+          rowsNow.forEach((r, i) => r.classList.toggle('active', i === active));
+          rowsNow[active].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          clearTimeout(timer);
+          if (list.style.display !== 'block') renderList();
+          const choice = matches[active >= 0 ? active : 0];
+          if (choice) pick(choice);
+        } else if (e.key === 'Escape') {
+          closeList();
+        }
+      });
+      // mousedown, not click: fires before the input loses focus and the list is closed
+      list.addEventListener('mousedown', (e) => {
+        const li = e.target.closest('li[data-idx]');
+        if (!li) return;
+        e.preventDefault();
+        pick(matches[parseInt(li.dataset.idx, 10)]);
+      });
+      document.addEventListener('mousedown', (e) => {
+        if (!box.contains(e.target)) closeList();
+      });
+
+      return { reset: reset };
+    }
+
+    const collabPicker = createTargetPicker({
+      boxId: 'collabBox', inputId: 'collabInput', listId: 'collabList',
+      buttonId: 'collabButton', labelId: 'collabLabel', label: 'Collab', command: COLLAB_COMMAND
+    });
+    const dissPicker = createTargetPicker({
+      boxId: 'dissBox', inputId: 'dissInput', listId: 'dissList',
+      buttonId: 'dissButton', labelId: 'dissLabel', label: 'Disstrack', command: DISSTRACK_COMMAND
+    });
+    function resetCollab() { collabPicker.reset(); dissPicker.reset(); }   // called when a channel's panel opens
+
+    // Picking a channel no longer drops straight into the grind panel --
+    // every channel needs a password-only login (no username; the cid is
+    // the identity) before its boost/rename controls become reachable. A
+    // stored token skips straight back in optimistically; if it's actually
+    // stale, the first /web/ call that gets a 401 bounces back to the auth
+    // view anyway (see doCommand/doRename).
+    function selectChannel(channel) {
+      if (selectedChannel === channel && (authView.style.display === 'flex' || grindPanel.style.display === 'flex')) return;   // already open
+      selectedChannel = channel;
+      localStorage.setItem(STORAGE_KEY, channel.cid);
+
+      if (getStoredToken(channel.cid)) {
+        revealGrindPanel(channel);
+      } else {
+        showAuthView(channel);
+      }
+    }
+
+    function revealGrindPanel(channel) {
+      setAvatar(grindAvatar, channel, 160);
+      grindName.textContent = channel.cname;
+      grindSubs.textContent = formatNumber(channel.subscriberCountRealAPI) + ' subscribers';
+      liveLink.href = 'https://tnstats.dev/season1/s1subs?fyscChannel=' + encodeURIComponent(channel.cid);
+      renameInput.value = '';
+      statusLine.textContent = '';
+      statusLine.className = 'status-line';
+      grindLeft.style.display = 'none';
+      hideCheck();
+      growthShown = null;
+      hideGain();
+      resetCollab();
+      odoCols = []; odoValue = 0; odoSign = '';
+      setOdometer(0, true);   // start at zero, then roll up to the real number
+
+      pickerView.style.display = 'none';
+      authView.style.display = 'none';
+      grindPanel.style.display = 'flex';
+      setMode('chat');
+      loadMode(channel);
+      refreshGrindStatus(channel);
+      refreshGrowth(channel);
+    }
+
+    // Which step of the auth view is showing:
+    //   'login'          -- channel has a password; password + captcha.
+    //   'claim-start'    -- captcha only; gets a !claim code from the server.
+    //   'claim-wait'     -- shows the code, polls until the channel's owner
+    //                       types it in live chat.
+    //   'claim-password' -- ownership proven; choose the password.
+    // Setting a password always goes through the claim steps. The server
+    // only accepts one when the channel itself typed the code in live chat
+    // (see /auth/claim/* in fysca_devasset/server.js), so picking a channel
+    // first no longer means owning it. The same steps re-claim a channel
+    // that already has a password, which replaces it and logs out every
+    // earlier login.
+    let authMode = 'login';
+    let currentClaimToken = null;
+    let claimPollTimer = null;
+    const CLAIM_POLL_MS = 3000;
+
+    // The server signs the expected answer into currentCaptchaToken and
+    // checks it on submit (see /auth/captcha, /auth/login, /auth/claim/start
+    // on the backend) -- this is just friction against a script blasting
+    // attempts, not meant to stop a human attacker who's actually looking
+    // at the page.
+    let currentCaptchaToken = null;
+
+    async function refreshCaptcha() {
+      captchaAnswerInput.value = '';
+      try {
+        const response = await fetch(window.FYSC_API_BASE + '/auth/captcha');
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        currentCaptchaToken = data.token;
+        captchaQuestionEl.textContent = data.question;
+      } catch (err) {
+        console.error('Captcha fetch failed:', err);
+        currentCaptchaToken = null;
+        captchaQuestionEl.textContent = '?';
+      }
+    }
+
+    function setAuthStatus(text, kind) {
+      authStatusLine.textContent = text;
+      authStatusLine.className = 'status-line' + (kind ? ' ' + kind : '');
+    }
+
+    function stopClaimPolling() {
+      clearTimeout(claimPollTimer);
+      claimPollTimer = null;
+    }
+
+    // Shows only the inputs the given step needs. Hidden inputs also drop
+    // `required`, otherwise the browser refuses to submit the form.
+    function setAuthMode(mode) {
+      authMode = mode;
+      stopClaimPolling();
+      const showPassword = mode === 'login' || mode === 'claim-password';
+      const showConfirm = mode === 'claim-password';
+      const showCaptcha = mode === 'login' || mode === 'claim-start';
+
+      authForm.style.display = mode === 'claim-wait' ? 'none' : 'flex';
+      claimBox.style.display = mode === 'claim-wait' ? 'flex' : 'none';
+      authReclaimLink.style.display = mode === 'login' ? 'block' : 'none';
+
+      authPasswordInput.style.display = showPassword ? 'block' : 'none';
+      authPasswordInput.required = showPassword;
+      authPasswordInput.autocomplete = mode === 'login' ? 'current-password' : 'new-password';
+      authConfirmInput.style.display = showConfirm ? 'block' : 'none';
+      authConfirmInput.required = showConfirm;
+      captchaQuestionLabel.style.display = showCaptcha ? 'block' : 'none';
+      captchaAnswerInput.style.display = showCaptcha ? 'block' : 'none';
+      captchaAnswerInput.required = showCaptcha;
+
+      authPasswordInput.value = '';
+      authConfirmInput.value = '';
+      authSubmitButton.disabled = false;
+      if (showCaptcha) refreshCaptcha();
+
+      if (mode === 'login') {
+        authHint.textContent = 'This channel already has a password set - log in to grind it.';
+        authSubmitLabel.textContent = 'Log in';
+      } else if (mode === 'claim-start') {
+        authHint.textContent = "To set this channel's password, prove it's yours by typing a code in the FYSC live chat from this channel.";
+        authSubmitLabel.textContent = 'Get claim code';
+      } else if (mode === 'claim-wait') {
+        authHint.textContent = 'Almost there - prove this channel is yours.';
+      } else if (mode === 'claim-password') {
+        authHint.textContent = "Verified! Choose a password. Anyone who knows it can grind this channel, so keep it to yourself.";
+        authSubmitLabel.textContent = 'Set password';
+      }
+    }
+
+    async function pollClaimStatus() {
+      if (authMode !== 'claim-wait' || !selectedChannel || !currentClaimToken) return;
+      try {
+        const response = await fetch(window.FYSC_API_BASE + '/auth/claim/status/' + encodeURIComponent(selectedChannel.cid) +
+          '?claimToken=' + encodeURIComponent(currentClaimToken));
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        if (authMode !== 'claim-wait') return; // left this step while the request was in flight
+        if (data.verified) {
+          setAuthMode('claim-password');
+          setAuthStatus('Channel verified.', 'ok');
+          return;
+        }
+        if (data.expired) {
+          setAuthMode('claim-start');
+          setAuthStatus('That code expired. Get a new one.', 'err');
+          return;
+        }
+      } catch (err) {
+        console.error('Claim status check failed:', err);
+      }
+      claimPollTimer = setTimeout(pollClaimStatus, CLAIM_POLL_MS);
+    }
+
+    async function showAuthView(channel) {
+      selectedChannel = channel;
+      currentClaimToken = null;
+      stopClaimPolling();
+      setAvatar(authAvatar, channel, 160);
+      authChannelName.textContent = channel.cname;
+      setAuthStatus('');
+      authForm.style.display = 'none';
+      claimBox.style.display = 'none';
+      authReclaimLink.style.display = 'none';
+      authHint.textContent = 'Checking this channel...';
+
+      pickerView.style.display = 'none';
+      grindPanel.style.display = 'none';
+      authView.style.display = 'flex';
+
+      try {
+        const response = await fetch(window.FYSC_API_BASE + '/auth/status/' + encodeURIComponent(channel.cid));
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        if (selectedChannel !== channel) return; // picked another channel meanwhile
+        setAuthMode(data.hasPassword ? 'login' : 'claim-start');
+      } catch (err) {
+        console.error('Auth status check failed:', err);
+        authHint.textContent = "Couldn't reach the server to check this channel. Try again.";
+      }
+    }
+
+    // Shared error handling for every auth POST. Returns the parsed JSON on
+    // success, or null after showing the error.
+    async function postAuth(path, body) {
+      const response = await fetch(window.FYSC_API_BASE + path + '/' + encodeURIComponent(selectedChannel.cid), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const text = await response.text();
+      if (response.ok) return JSON.parse(text);
+
+      setAuthStatus(text || 'Something went wrong.', 'err');
+      authSubmitButton.disabled = false;
+      if (authMode === 'login' || authMode === 'claim-start') refreshCaptcha();
+      // An expired or already-used claim can't be retried, so start the claim over.
+      if (authMode === 'claim-password' && response.status === 403 && /expired/i.test(text)) {
+        setAuthMode('claim-start');
+        setAuthStatus(text, 'err');
+      }
+      return null;
+    }
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!selectedChannel) return;
+
+      const password = authPasswordInput.value;
+      if (authMode === 'login' || authMode === 'claim-password') {
+        if (password.length < 6) return setAuthStatus('Password must be at least 6 characters.', 'err');
+      }
+      if (authMode === 'claim-password' && password !== authConfirmInput.value) {
+        return setAuthStatus("Passwords don't match.", 'err');
+      }
+      if ((authMode === 'login' || authMode === 'claim-start') && !captchaAnswerInput.value.trim()) {
+        return setAuthStatus('Answer the question above first.', 'err');
+      }
+
+      authSubmitButton.disabled = true;
+      const captcha = { captchaToken: currentCaptchaToken, captchaAnswer: captchaAnswerInput.value.trim() };
+
+      try {
+        if (authMode === 'claim-start') {
+          setAuthStatus('Getting a claim code...', 'wait');
+          const data = await postAuth('/auth/claim/start', captcha);
+          if (!data) return;
+          currentClaimToken = data.claimToken;
+          claimCommand.textContent = '!claim ' + data.code;
+          claimWaitHint.textContent = 'Waiting for verification... (code expires in ' + Math.round(data.expiresInSeconds / 60) + ' minutes)';
+          refreshGoogleAvailability();
+          setAuthMode('claim-wait');
+          setAuthStatus('');
+          claimPollTimer = setTimeout(pollClaimStatus, CLAIM_POLL_MS);
+          return;
+        }
+
+        if (authMode === 'claim-password') {
+          setAuthStatus('Setting password...', 'wait');
+          const data = await postAuth('/auth/signup', { password: password, claimToken: currentClaimToken });
+          if (!data) return;
+          currentClaimToken = null;
+          setStoredToken(selectedChannel.cid, data.token);
+          revealGrindPanel(selectedChannel);
+          return;
+        }
+
+        setAuthStatus('Logging in...', 'wait');
+        const data = await postAuth('/auth/login', Object.assign({ password: password }, captcha));
+        if (!data) return;
+        setStoredToken(selectedChannel.cid, data.token);
+        revealGrindPanel(selectedChannel);
+      } catch (err) {
+        console.error('Auth request failed:', err);
+        setAuthStatus("Couldn't reach the server. Try again.", 'err');
+        authSubmitButton.disabled = false;
+      }
+    });
+
+    authReclaimLink.addEventListener('click', () => {
+      setAuthMode('claim-start');
+      setAuthStatus('');
+    });
+
+    // "Verify with Google" is a second way to prove the claim: the popup has
+    // the server check which channel the chosen Google account owns, and on
+    // a match marks this claim verified -- the same thing !claim does -- so
+    // pollClaimStatus picks it up and moves on with no extra wiring. The
+    // button only shows when the server has Google set up.
+    async function refreshGoogleAvailability() {
+      claimGoogle.style.display = 'none';
+      try {
+        const response = await fetch(window.FYSC_API_BASE + '/auth/google/enabled');
+        const data = await response.json();
+        if (data.enabled && authMode === 'claim-wait') claimGoogle.style.display = 'flex';
+      } catch (e) {
+        // leave it hidden; !claim still works
+      }
+    }
+
+    claimGoogleBtn.addEventListener('click', () => {
+      if (!currentClaimToken) return;
+      const popup = window.open(window.FYSC_API_BASE + '/auth/google/start?claimToken=' + encodeURIComponent(currentClaimToken),
+        'fyscGoogleVerify', 'width=500,height=650');
+      if (!popup) setAuthStatus('Your browser blocked the popup. Allow popups for this site and try again.', 'err');
+    });
+
+    claimCopyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(claimCommand.textContent);
+        claimCopyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+      } catch (e) {
+        claimCopyBtn.textContent = 'Select the text above to copy it';
+      }
+      setTimeout(() => { claimCopyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy'; }, 2000);
+    });
+
+    document.getElementById('authChangeChannelBtn').addEventListener('click', () => {
+      stopClaimPolling();
+      authView.style.display = 'none';
+      pickerView.style.display = 'block';
+    });
+
+    document.getElementById('changeChannelBtn').addEventListener('click', () => {
+      hideCheck();
+      grindPanel.style.display = 'none';
+      pickerView.style.display = 'block';
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      if (selectedChannel) clearStoredToken(selectedChannel.cid);
+      hideCheck();
+      grindPanel.style.display = 'none';
+      pickerView.style.display = 'block';
+    });
+
+    // Mirrors /rename/:cid?to=... (fysca_devasset/server.js), but through
+    // the /web/rename/:cid counterpart that requires a login token for this
+    // cid. The plain /rename/:cid route only takes the shared command key
+    // (when one is configured), never a channel login.
+    async function doRename() {
+      if (!selectedChannel) return;
+      const newName = renameInput.value.trim();
+      if (!newName) {
+        setStatus('Type a new name first.', 'err');
+        return;
+      }
+      // Same limit the server enforces (a letter or emoji counts once). Over it, the server would put the
+      // name back to the channel's default, so don't even send it.
+      if (Array.from(newName).length > MAX_NAME_LENGTH) {
+        setStatus('Names can be at most ' + MAX_NAME_LENGTH + ' characters (yours is ' + Array.from(newName).length + ').', 'err');
+        return;
+      }
+
+      renameButton.disabled = true;
+      setStatus('Renaming...', 'wait');
+
+      try {
+        const url = window.FYSC_API_BASE + '/web/rename/' + encodeURIComponent(selectedChannel.cid) +
+          '?to=' + encodeURIComponent(newName);
+        const response = await fetch(url, { headers: authHeaders(selectedChannel.cid) });
+
+        if (response.status === 401 || response.status === 403) {
+          clearStoredToken(selectedChannel.cid);
+          setStatus('Your login expired. Log in again.', 'err');
+          showAuthView(selectedChannel);
+          return;
+        }
+
+        // 422 = the server refused the name (not allowed, or too long): show its reason, nothing was renamed
+        if (response.status === 422) {
+          setStatus((await response.text()) || "That name isn't allowed. Pick a different one.", 'err');
+          return;
+        }
+
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        // The backend only applies renamedTo for 24-char (standard YouTube)
+        // channel IDs -- see /public/s9_data in fysca_devasset/server.js.
+        // Reflect that here instead of claiming success either way.
+        if (selectedChannel.cid.length !== 24) {
+          setStatus("Renamed on the backend, but this channel's ID isn't the usual 24-character format, so the new name may not show up elsewhere.", 'err');
+        } else {
+          selectedChannel.cname = newName;
+          grindName.textContent = newName;
+          const inList = allChannels.find(c => c.cid === selectedChannel.cid);
+          if (inList) { inList.cname = newName; inList._key = (newName + ' ' + inList.cid).toLowerCase(); }
+          setStatus('Renamed to "' + newName + '"!', 'ok');
+          renameInput.value = '';
+        }
+      } catch (err) {
+        console.error('Rename request failed:', err);
+        setStatus("Couldn't reach the server. Try again.", 'err');
+      } finally {
+        renameButton.disabled = false;
+      }
+    }
+
+    renameButton.addEventListener('click', doRename);
+    renameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doRename();
+    });
+
+    async function loadChannels() {
+      loading.style.display = 'flex';
+
+      try {
+        const response = await fetch(DATA_ENDPOINT);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const data = await response.json();
+        if (!Array.isArray(data)) throw new Error('Unexpected response shape');
+
+        allChannels = data.filter(c => c && c.cid).map(c => {
+          c.cname = String(c.cname == null ? c.cid : c.cname);
+          c.subscriberCountRealAPI = Number(c.subscriberCountRealAPI) || 0;
+          c._key = (c.cname + ' ' + c.cid).toLowerCase();   // search text, built once
+          return c;
+        }).sort((a, b) => b.subscriberCountRealAPI - a.subscriberCountRealAPI);
+        displayChannels(allChannels);
+
+        const rememberedCid = localStorage.getItem(STORAGE_KEY);
+        if (rememberedCid) {
+          const remembered = allChannels.find(c => c.cid === rememberedCid);
+          if (remembered) selectChannel(remembered);
+        }
+      } catch (err) {
+        console.error('Error fetching channels:', err);
+        emptyState.textContent = 'Failed to load channels. Is the API running?';
+        emptyState.style.display = 'block';
+      } finally {
+        loading.style.display = 'none';
+      }
+    }
+
+    loadChannels();
+  </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;0f8a32da6fcc422593af56e911e9465d&quot;,&quot;r&quot;:1,&quot;spa&quot;:2}" crossorigin="anonymous"></script>
+
+</body></html>
