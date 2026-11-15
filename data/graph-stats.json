@@ -152216,5 +152216,46 @@
         "growth": 40504975
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-15T09:45:25.615Z",
+    "subscriberShare": 2.902091180492433,
+    "growthShare": 0.047902495785041854,
+    "totalSubscribers": 89515110520,
+    "totalGrowth": 3796525,
+    "fullSubscriberTotal": 3084503723443,
+    "fullGrowthTotal": 7925526505,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 61305021388
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "戇鳩死仆街，屌你老母臭閪冚家鏟",
+        "value": 28210089132
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 1106258
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "戇鳩死仆街，屌你老母臭閪冚家鏟",
+        "value": 2690267
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "ㅤㅤㅤ",
+        "subscribers": 15430261507,
+        "growth": 40065353
+      }
+    ]
   }
 ]
