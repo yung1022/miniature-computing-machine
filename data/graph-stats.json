@@ -153054,5 +153054,56 @@
         "growth": 92996653
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-15T11:15:25.283Z",
+    "subscriberShare": 2.8999582977270038,
+    "growthShare": 0.4806179357818483,
+    "totalSubscribers": 89518764354,
+    "totalGrowth": 38549171,
+    "fullSubscriberTotal": 3086898333130,
+    "fullGrowthTotal": 8020751647,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 61305477134
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "戇鳩死仆街，屌你老母臭閪冚家鏟",
+        "value": 28211705966
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum",
+        "value": 1581254
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 922985
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "戇鳩死仆街，屌你老母臭閪冚家鏟",
+        "value": 2236812
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum",
+        "value": 35389374
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "ㅤㅤㅤ",
+        "subscribers": 15443766230,
+        "growth": 100415125
+      }
+    ]
   }
 ]
