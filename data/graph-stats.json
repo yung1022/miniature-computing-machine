@@ -155859,5 +155859,56 @@
         "growth": 361857945
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-15T15:55:24.612Z",
+    "subscriberShare": 2.902455865200991,
+    "growthShare": 5.0460156118963315,
+    "totalSubscribers": 89845602757,
+    "totalGrowth": 559606453,
+    "fullSubscriberTotal": 3095502806234,
+    "fullGrowthTotal": 11090065827,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 61306788894
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Happy Bday Liliana!",
+        "value": 28217357726
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum",
+        "value": 321456137
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 546554
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Happy Bday Liliana!",
+        "value": 8675240
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum",
+        "value": 550384659
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "🎁 Happy Bday Liliana! :)",
+        "subscribers": 15677547980,
+        "growth": 366890935
+      }
+    ]
   }
 ]
