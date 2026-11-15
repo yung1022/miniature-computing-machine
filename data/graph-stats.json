@@ -149059,5 +149059,46 @@
         "growth": 182662250
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-15T03:20:27.271Z",
+    "subscriberShare": 2.911163360901449,
+    "growthShare": 0.037923339522330866,
+    "totalSubscribers": 89510761569,
+    "totalGrowth": 3092723,
+    "fullSubscriberTotal": 3074741966431,
+    "fullGrowthTotal": 8155196876,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "Franz Hermann",
+        "value": 61303900739
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "戇鳩死仆街，屌你老母臭閪冚家鏟",
+        "value": 28206860830
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "Franz Hermann",
+        "value": 24078
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "戇鳩死仆街，屌你老母臭閪冚家鏟",
+        "value": 3068645
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "ㅤㅤㅤ",
+        "subscribers": 15313227257,
+        "growth": 179003850
+      }
+    ]
   }
 ]
