@@ -4,7 +4,7 @@
   // === CONFIGURABLE SETTINGS & INTERVALS (in milliseconds) ===
   const INTERVAL_ITEM19_MS = 4800;   // How often Item 19 runs
   const INTERVAL_BOOST_MS = 153600;   // How often Boost runs (e.g., every 2 seconds)
-  const INTERVAL_COLLAB_MS = 301000;  // How often Collab runs (e.g., every 1 second)
+  const INTERVAL_COLLAB_MS = 601000;  // How often Collab runs (e.g., every 1 second)
   
   // Configurable Auth Password for HTTP 401 handling
   const AUTH_PASSWORD = window.INJECTED_AUTH_PASSWORD;
