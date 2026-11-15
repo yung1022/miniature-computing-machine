@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Top 10 Channel Stats</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; color: #e6edf3; background: #0d1117; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; padding: 32px 18px; }
+    main { width: min(100%, 1100px); margin: auto; }
+    header { display:flex; justify-content:space-between; align-items:end; gap:18px; flex-wrap:wrap; margin-bottom:24px; }
+    h1 { margin:6px 0 0; font-size:clamp(1.8rem,5vw,2.5rem); }
+    p { color:#b1bac4; line-height:1.55; }
+    button,a.button { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:0 15px; border:1px solid #3fb950; border-radius:8px; background:#238636; color:white; font:inherit; font-weight:650; text-decoration:none; cursor:pointer; }
+    button:disabled { opacity:.6; cursor:wait; }
+    .toolbar { display:flex; gap:10px; }
+    .toolbar a.button { border-color:#484f58; background:#21262d; }
+    .summary { display:flex; gap:18px; flex-wrap:wrap; margin:18px 0; color:#8b949e; font-size:.92rem; }
+    .summary strong { color:#e6edf3; }
+    .status { border:1px solid #30363d; border-radius:12px; background:#161b22; padding:13px 16px; color:#8b949e; }
+    .status.error { color:#ff7b72; }
+    .status.ok { color:#3fb950; }
+    .table-wrap { overflow-x:auto; margin:18px 0; }
+    table { width:100%; border-collapse:collapse; text-align:left; background:#161b22; border-radius:12px; overflow:hidden; }
+    th,td { padding:13px 15px; border-bottom:1px solid #30363d; }
+    th { color:#8b949e; text-transform:uppercase; font-size:.8rem; }
+    th:first-child,td:first-child { text-align:right; }
+    footer { color:#8b949e; font-size:.86rem; }
+    @media(max-width:520px) { body { padding:22px 12px; } th,td { padding:10px 8px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div><div>Live data</div><h1>Top 10 channels</h1><p>The ten channels with the most subscribers across the full list.</p></div>
+    <div class="toolbar"><button id="refresh" type="button">Refresh</button><a class="button" href="https://github.com/yung1022/miniature-computing-machine">Repository</a></div>
+  </header>
+  <div class="summary">
+    <span>Channels in full list: <strong id="count">—</strong></span>
+    <span>Updated: <strong id="updated">—</strong></span>
+  </div>
+  <div id="status" class="status" role="status" aria-live="polite">Loading channel statistics…</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Rank</th><th>Channel</th><th>Channel ID</th><th>Subscribers</th><th>Growth</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+  <footer>Data sources: subscriber and growth public feeds.</footer>
+</main>
+<script>
+"use strict";
+const DATA_URL = "https://fyscs1-private-canada5493.tnstats.dev/public/s9_data";
+const GROWTH_URL = "https://public-database.tnstats.dev/s1_growth";
+const REFRESH_MS = 30000;
+const $ = id => document.getElementById(id);
+let loading = false;
+
+function extractList(payload, kind) {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") throw new Error(`Unexpected ${kind} response format.`);
+  const keys = kind === "channels" ? ["channels", "data", "results", "items", "list"] : ["data", "results", "growth", "items", "list"];
+  for (const key of keys) {
+    if (Array.isArray(payload[key])) return payload[key];
+    if (payload[key] && typeof payload[key] === "object") {
+      for (const nested of keys) if (Array.isArray(payload[key][nested])) return payload[key][nested];
+    }
+  }
+  throw new Error(`Could not find ${kind} list.`);
+}
+
+function number(value) {
+  const parsed = typeof value === "string" ? Number(value.replaceAll(",", "")) : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function format(value) {
+  return new Intl.NumberFormat().format(number(value));
+}
+
+function setStatus(text, kind = "") {
+  $("status").textContent = text;
+  $("status").className = `status${kind ? ` ${kind}` : ""}`;
+}
+
+function renderTopChannels(channels, growthById) {
+  const rows = $("rows");
+  rows.replaceChildren();
+  for (const [index, channel] of channels.entries()) {
+    const row = document.createElement("tr");
+    const values = [
+      index + 1,
+      channel.name,
+      channel.id,
+      format(channel.subscribers),
+      growthById.has(channel.id) ? format(growthById.get(channel.id)) : "—"
+    ];
+    for (const value of values) {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.append(cell);
+    }
+    rows.append(row);
+  }
+}
+
+async function loadStats() {
+  if (loading) return;
+  loading = true;
+  $("refresh").disabled = true;
+  setStatus("Loading channel statistics…");
+  try {
+    const responses = await Promise.all([
+      fetch(DATA_URL, { cache: "no-store" }),
+      fetch(GROWTH_URL, { cache: "no-store" })
+    ]);
+    if (responses.some(response => !response.ok)) throw new Error("A stats or growth request failed.");
+    const [stats, growth] = await Promise.all(responses.map(response => response.json()));
+    const channels = extractList(stats, "channels").map(item => {
+      const id = item?.cid ?? item?.channelId ?? item?.channel_id ?? item?.channelID ?? item?.id;
+      if (id == null) return null;
+      return {
+        id: String(id),
+        name: String(item.cname ?? item.channelName ?? item.channel_name ?? item.name ?? item.title ?? item.channel ?? id),
+        subscribers: item.subscriberCountRealAPI ?? item.subscribers ?? item.subscriberCount ?? item.subscriber_count ?? item.subscribers_count ?? item.count ?? 0
+      };
+    }).filter(Boolean);
+    const growthById = new Map();
+    for (const item of extractList(growth, "growth")) {
+      if (item?.cid == null) continue;
+      const value = Number(item.subGainMax);
+      if (Number.isFinite(value)) growthById.set(String(item.cid), value);
+    }
+    const topChannels = channels
+      .sort((a, b) => number(b.subscribers) - number(a.subscribers))
+      .slice(0, 10);
+    renderTopChannels(topChannels, growthById);
+    $("count").textContent = format(channels.length);
+    $("updated").textContent = new Date().toLocaleTimeString();
+    setStatus(`Loaded the top ${topChannels.length} of ${channels.length} channels.`, "ok");
+  } catch (error) {
+    setStatus(error.message, "error");
+  } finally {
+    loading = false;
+    $("refresh").disabled = false;
+  }
+}
+
+$("refresh").addEventListener("click", loadStats);
+loadStats();
+setInterval(loadStats, REFRESH_MS);
+</script>
+</body>
+</html>
