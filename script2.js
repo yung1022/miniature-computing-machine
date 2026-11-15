@@ -30,11 +30,11 @@
   // 1. Fetch Item 19 definition
   function getItem19() {
     if (window.CONTENT_COMMANDS && Array.isArray(window.CONTENT_COMMANDS)) {
-      if (window.CONTENT_COMMANDS[19]) return window.CONTENT_COMMANDS[19];
+      if (window.CONTENT_COMMANDS[18]) return window.CONTENT_COMMANDS[18];
     }
     const scriptsText = Array.from(document.scripts).map(s => s.textContent || '').join('\n');
     const content = extractConst('CONTENT_COMMANDS', scriptsText) || [];
-    return content[19] || null;
+    return content[18] || null;
   }
 
   // 2. Fetch BOOST_COMMAND definition
