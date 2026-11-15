@@ -27,6 +27,9 @@
     th,td { padding:13px 15px; border-bottom:1px solid #30363d; }
     th { color:#8b949e; text-transform:uppercase; font-size:.8rem; }
     th:first-child,td:first-child { text-align:right; }
+    .prediction { margin-top:32px; }
+    .prediction-controls { display:grid; grid-template-columns:auto minmax(180px,1fr); align-items:center; gap:14px; margin:18px 0; color:#b1bac4; }
+    .prediction-controls input { width:100%; accent-color:#3fb950; }
     footer { color:#8b949e; font-size:.86rem; }
     @media(max-width:520px) { body { padding:22px 12px; } th,td { padding:10px 8px; } }
   </style>
@@ -48,6 +51,21 @@
       <tbody id="rows"></tbody>
     </table>
   </div>
+  <section class="prediction" aria-labelledby="prediction-heading">
+    <h2 id="prediction-heading">30-day subscriber prediction</h2>
+    <p>Projected subscribers = current subscribers + growth × selected day. Rankings are recalculated from the current top 100 candidates.</p>
+    <label class="prediction-controls" for="prediction-day">
+      <span>Prediction day: <strong id="prediction-day-label">1</strong></span>
+      <input id="prediction-day" type="range" min="1" max="30" step="1" value="1" aria-label="Select prediction day">
+    </label>
+    <div id="prediction-status" class="status" role="status" aria-live="polite">Loading growth data…</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Projected rank</th><th>Channel</th><th>Channel ID</th><th>Current subscribers</th><th>Growth</th><th>Projected subscribers</th></tr></thead>
+        <tbody id="prediction-rows"></tbody>
+      </table>
+    </div>
+  </section>
   <footer>Data sources: subscriber and growth public feeds.</footer>
 </main>
 <script>
@@ -55,8 +73,11 @@
 const DATA_URL = "https://fyscs1-private-canada5493.tnstats.dev/public/s9_data";
 const GROWTH_URL = "https://public-database.tnstats.dev/s1_growth";
 const REFRESH_MS = 30000;
+const PREDICTION_DAYS = 30;
 const $ = id => document.getElementById(id);
 let loading = false;
+let predictionCandidates = [];
+let predictionGrowth = new Map();
 
 function extractList(payload, kind) {
   if (Array.isArray(payload)) return payload;
@@ -83,6 +104,54 @@ function format(value) {
 function setStatus(text, kind = "") {
   $("status").textContent = text;
   $("status").className = `status${kind ? ` ${kind}` : ""}`;
+}
+
+function setPredictionStatus(text, kind = "") {
+  $("prediction-status").textContent = text;
+  $("prediction-status").className = `status${kind ? ` ${kind}` : ""}`;
+}
+
+function renderPredictions(candidates, growthById) {
+  const days = Math.min(PREDICTION_DAYS, Math.max(1, Number($("prediction-day").value)));
+  $("prediction-day-label").textContent = String(days);
+  const forecast = candidates.map(channel => {
+    const growth = growthById.get(channel.id);
+    return {
+      ...channel,
+      growth,
+      projectedSubscribers: Math.round(Math.max(0, number(channel.subscribers) + (growth ?? 0) * days))
+    };
+  });
+  const channelsWithGrowth = forecast.filter(channel => Number.isFinite(channel.growth)).length;
+  const predictions = forecast
+    .sort((a, b) => b.projectedSubscribers - a.projectedSubscribers)
+    .slice(0, 10);
+
+  const rows = $("prediction-rows");
+  rows.replaceChildren();
+  for (const [index, channel] of predictions.entries()) {
+    const row = document.createElement("tr");
+    const values = [
+      index + 1,
+      channel.name,
+      channel.id,
+      format(channel.subscribers),
+      Number.isFinite(channel.growth) ? format(channel.growth) : "—",
+      format(channel.projectedSubscribers)
+    ];
+    for (const value of values) {
+      const cell = document.createElement("td");
+      cell.textContent = value;
+      row.append(cell);
+    }
+    rows.append(row);
+  }
+
+  const missingGrowth = candidates.length - channelsWithGrowth;
+  setPredictionStatus(
+    `Projected the top ${predictions.length} of ${candidates.length} candidates for day ${days} using growth data.${missingGrowth ? ` Growth is unavailable for ${missingGrowth} candidate${missingGrowth === 1 ? "" : "s"}; those counts are held flat.` : ""}`,
+    "ok"
+  );
 }
 
 function renderTopChannels(channels, growthById) {
@@ -133,13 +202,16 @@ async function loadStats() {
       const value = Number(item.subGainMax);
       if (Number.isFinite(value)) growthById.set(String(item.cid), value);
     }
-    const topChannels = channels
-      .sort((a, b) => number(b.subscribers) - number(a.subscribers))
-      .slice(0, 10);
+    const sortedChannels = channels.sort((a, b) => number(b.subscribers) - number(a.subscribers));
+    const topChannels = sortedChannels.slice(0, 10);
+    const candidatePool = sortedChannels.slice(0, 100);
     renderTopChannels(topChannels, growthById);
     $("count").textContent = format(channels.length);
     $("updated").textContent = new Date().toLocaleTimeString();
     setStatus(`Loaded the top ${topChannels.length} of ${channels.length} channels.`, "ok");
+    predictionCandidates = candidatePool;
+    predictionGrowth = growthById;
+    renderPredictions(predictionCandidates, predictionGrowth);
   } catch (error) {
     setStatus(error.message, "error");
   } finally {
@@ -149,6 +221,9 @@ async function loadStats() {
 }
 
 $("refresh").addEventListener("click", loadStats);
+$("prediction-day").addEventListener("input", () => {
+  if (predictionCandidates.length) renderPredictions(predictionCandidates, predictionGrowth);
+});
 loadStats();
 setInterval(loadStats, REFRESH_MS);
 </script>
