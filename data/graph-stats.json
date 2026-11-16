@@ -166365,5 +166365,56 @@
         "growth": 458005661
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-16T09:30:31.502Z",
+    "subscriberShare": 2.9815590127121765,
+    "growthShare": 5.186762738823003,
+    "totalSubscribers": 94189241818,
+    "totalGrowth": 919925986,
+    "fullSubscriberTotal": 3159060123124,
+    "fullGrowthTotal": 17736033675,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 61311796269
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Happy Bday Liliana!",
+        "value": 29294378526
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum",
+        "value": 3583067023
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 376690
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Happy Bday Liliana!",
+        "value": 5171698
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum",
+        "value": 914377598
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "FDF vs Lucien",
+        "subscribers": 18093806695,
+        "growth": 454648737
+      }
+    ]
   }
 ]
