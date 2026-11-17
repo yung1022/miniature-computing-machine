@@ -183144,5 +183144,56 @@
         "growth": 728692323
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-17T13:35:21.918Z",
+    "subscriberShare": 2.984666431484535,
+    "growthShare": 2.5520771837921554,
+    "totalSubscribers": 97199842289,
+    "totalGrowth": 335510360,
+    "fullSubscriberTotal": 3256640047399,
+    "fullGrowthTotal": 13146560070,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 61313294732
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Curtis",
+        "value": 29312418073
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum",
+        "value": 6574129484
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 334277
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Curtis",
+        "value": 16395678
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum",
+        "value": 318780405
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "FDF vs Lucien",
+        "subscribers": 21299516402,
+        "growth": 728692323
+      }
+    ]
   }
 ]
