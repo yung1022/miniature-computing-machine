@@ -202847,5 +202847,56 @@
         "growth": 781927518
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-18T23:25:26.889Z",
+    "subscriberShare": 3.0908014657425706,
+    "growthShare": 4.358122078381812,
+    "totalSubscribers": 101071031595,
+    "totalGrowth": 845714291,
+    "fullSubscriberTotal": 3270059002988,
+    "fullGrowthTotal": 19405475014,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "giveaway, not count as curtis",
+        "value": 61320677930
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Depressed af",
+        "value": 31225162754
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum REMOVED TWICE??",
+        "value": 8525190911
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "giveaway, not count as curtis",
+        "value": 292278
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Depressed af",
+        "value": 676422768
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum REMOVED TWICE??",
+        "value": 168999245
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "FDF is cooking",
+        "subscribers": 26208514146,
+        "growth": 784548356
+      }
+    ]
   }
 ]
