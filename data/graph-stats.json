@@ -196286,5 +196286,46 @@
         "growth": 879589895
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-18T12:30:32.170Z",
+    "subscriberShare": 2.8278410682579267,
+    "growthShare": 1.9173442921992203,
+    "totalSubscribers": 90728738652,
+    "totalGrowth": 345487436,
+    "fullSubscriberTotal": 3208410107287,
+    "fullGrowthTotal": 18019060917,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 61317087817
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Curtis",
+        "value": 29411650835
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 311056
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Curtis",
+        "value": 345176380
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "FullDragonForce on his prime",
+        "subscribers": 24124979340,
+        "growth": 884768893
+      }
+    ]
   }
 ]
