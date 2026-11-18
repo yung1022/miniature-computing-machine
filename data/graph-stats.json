@@ -195540,5 +195540,56 @@
         "growth": 753975059
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-18T11:10:33.377Z",
+    "subscriberShare": 2.975865067978504,
+    "growthShare": 5.19971669540813,
+    "totalSubscribers": 98801363435,
+    "totalGrowth": 1030920052,
+    "fullSubscriberTotal": 3320088820496,
+    "fullGrowthTotal": 19826465794,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 61316505178
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Curtis",
+        "value": 29349689261
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum",
+        "value": 8135168996
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 312136
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Curtis",
+        "value": 96076835
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum",
+        "value": 934531081
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "FDF vs Lucien (Final battle)",
+        "subscribers": 23890243261,
+        "growth": 763010089
+      }
+    ]
   }
 ]
