@@ -196614,5 +196614,46 @@
         "growth": 925297221
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-18T13:10:27.677Z",
+    "subscriberShare": 2.8274860853843595,
+    "growthShare": 2.5822545324794843,
+    "totalSubscribers": 90786178015,
+    "totalGrowth": 478934759,
+    "fullSubscriberTotal": 3210844378131,
+    "fullGrowthTotal": 18547155324,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 61317110294
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Curtis",
+        "value": 29469067721
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 310439
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Curtis",
+        "value": 478624320
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "FDF getting cooked",
+        "subscribers": 24252567764,
+        "growth": 923707546
+      }
+    ]
   }
 ]
