@@ -191294,5 +191294,46 @@
         "growth": 400286878
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-18T03:10:27.484Z",
+    "subscriberShare": 2.75824680483249,
+    "growthShare": 0.11093075374938581,
+    "totalSubscribers": 90649837454,
+    "totalGrowth": 14667249,
+    "fullSubscriberTotal": 3286502038004,
+    "fullGrowthTotal": 13221986243,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 61315135843
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Curtis",
+        "value": 29334701611
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 319807
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Curtis",
+        "value": 14347442
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "FDF vs Lucien",
+        "subscribers": 23127546883,
+        "growth": 393969431
+      }
+    ]
   }
 ]
