@@ -196040,5 +196040,46 @@
         "growth": 837406695
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-18T12:00:42.539Z",
+    "subscriberShare": 2.828437554914374,
+    "growthShare": 1.4183624998183753,
+    "totalSubscribers": 90697327612,
+    "totalGrowth": 250927440,
+    "fullSubscriberTotal": 3206622944686,
+    "fullGrowthTotal": 17691347595,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 61317071325
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Curtis",
+        "value": 29380256287
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "gg",
+        "value": 311503
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Curtis",
+        "value": 250615937
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "FDF vs Lucien (Final battle)",
+        "subscribers": 24034464917,
+        "growth": 846183985
+      }
+    ]
   }
 ]
