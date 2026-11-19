@@ -1390,7 +1390,7 @@
 
     async function refreshGrindStatus(channel) {
       try {
-        const response = await fetch(window.FYSC_API_BASE + '/grind/status/' + encodeURIComponent(channel.cid));
+        const response = await fetch(window.FYSC_API_BASE + '/grind/status/' + encodeURIComponent(channel.cid) + "?ticket=1");
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const data = await response.json();
         if (selectedChannel !== channel) return;
