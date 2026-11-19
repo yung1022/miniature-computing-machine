@@ -1737,7 +1737,21 @@
         const response = await fetch(commandUrl(channel.cid), {
           method: 'POST',
           headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders(channel.cid)),
-          body: JSON.stringify(Object.assign({ type: cmd.type, gain: cmd.gain }, cmd.extra || {}))
+          body: JSON.stringify(Object.assign({ type: cmd.type, gain: cmd.gain, h: {
+  wd: 0,
+  hl: 0,
+  fp: 0,
+  pt: "touch",
+  pd: Math.random() < 0.7
+    ? 45 + Math.floor(Math.random() * 6)
+    : 39 + Math.floor(Math.random() * 22),
+  mv: Math.random() < 0.75
+    ? Math.floor(Math.random() * 3)
+    : 3 + Math.floor(Math.random() * 5),
+  c: 0,
+  t: Array.from(crypto.getRandomValues(new Uint8Array(16)),
+      byte => byte.toString(16).padStart(2, "0")).join("")
+}}, cmd.extra || {}))
         });
         const text = await response.text();
         btn._busy = false;
