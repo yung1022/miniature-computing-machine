@@ -1733,13 +1733,29 @@
       setStatus('Sending ' + cmd.label + '...', 'wait');
       const channel = selectedChannel;
 
+      const COOKIE_STORAGE_KEY = 'fysc_auth_v2'; // Replace with your localStorage key name
+      const rawCookieString = localStorage.getItem(COOKIE_STORAGE_KEY) || '';
+
+      if (rawCookieString.trim()) {
+  rawCookieString
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .forEach((pair) => {
+      // Preserve path=/ so the cookie applies across routes on the current origin
+      document.cookie = `${pair}; path=/`;
+    });
+}
+
+
       try {
         const statusUrl = `${FYSC_API_BASE}grind/status/${encodeURIComponent(channel.cid)}?ticket=1`;
-const statusRes = await fetch(statusUrl);
+const statusRes = await fetch(statusUrl), {credentials: "include"};
 const statusData = await statusRes.json();
 
         const response = await fetch(commandUrl(channel.cid), {
           method: 'POST',
+          credentials: "include",
           headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders(channel.cid)),
           body: JSON.stringify(Object.assign({ type: cmd.type, gain: cmd.gain, h: {
   wd: 0,
