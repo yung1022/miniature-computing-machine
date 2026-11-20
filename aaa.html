@@ -1734,6 +1734,10 @@
       const channel = selectedChannel;
 
       try {
+        const statusUrl = `${FYSC_API_BASE}grind/status/${encodeURIComponent(channel.cid)}?ticket=1`;
+const statusRes = await fetch(statusUrl);
+const statusData = await statusRes.json();
+
         const response = await fetch(commandUrl(channel.cid), {
           method: 'POST',
           headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders(channel.cid)),
@@ -1749,8 +1753,7 @@
     ? Math.floor(Math.random() * 3)
     : 3 + Math.floor(Math.random() * 5),
   c: 0,
-  t: Array.from(crypto.getRandomValues(new Uint8Array(16)),
-      byte => byte.toString(16).padStart(2, "0")).join("")
+  t: statusData.t
 }}, cmd.extra || {}))
         });
         const text = await response.text();
