@@ -277460,5 +277460,56 @@
         "growth": 506003503
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-24T02:25:26.427Z",
+    "subscriberShare": 2.9825340680057257,
+    "growthShare": 3.6906476676396514,
+    "totalSubscribers": 112154653463,
+    "totalGrowth": 507566636,
+    "fullSubscriberTotal": 3760381303473,
+    "fullGrowthTotal": 13752779504,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "giveaway, not count as curtis",
+        "value": 61324426224
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Exit Music (For A Film)",
+        "value": 37647253607
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum REMOVED TWICE??",
+        "value": 13182973632
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "giveaway, not count as curtis",
+        "value": 778556
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Exit Music (For A Film)",
+        "value": 464714912
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum REMOVED TWICE??",
+        "value": 42073168
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "🐉 FDF is cooking 🔥",
+        "subscribers": 43442681135,
+        "growth": 502876216
+      }
+    ]
   }
 ]
