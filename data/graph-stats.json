@@ -320096,5 +320096,56 @@
         "growth": 665652556
       }
     ]
+  },
+  {
+    "timestamp": "2026-11-27T01:10:27.488Z",
+    "subscriberShare": 2.8841240363426714,
+    "growthShare": 5.725732433082909,
+    "totalSubscribers": 113052580646,
+    "totalGrowth": 780469309,
+    "fullSubscriberTotal": 3919823808596,
+    "fullGrowthTotal": 13630907803,
+    "channelSubscribers": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "giveaway, not count as curtis",
+        "value": 51331687701
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Exit Music (For A Film)",
+        "value": 47643700945
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum REMOVED TWICE??",
+        "value": 14077192000
+      }
+    ],
+    "channelGrowth": [
+      {
+        "channelId": "UCHGCm5vwMUmfT6KnsCQY6Aw",
+        "channelName": "giveaway, not count as curtis",
+        "value": 1991330
+      },
+      {
+        "channelId": "UCjrii0S-8k6sfc_ds3V-mRg",
+        "channelName": "Exit Music (For A Film)",
+        "value": 611993835
+      },
+      {
+        "channelId": "UCXYnf-nl_sStB8nMbwWNNYg",
+        "channelName": "Osman Shum REMOVED TWICE??",
+        "value": 166484144
+      }
+    ],
+    "excludedChannels": [
+      {
+        "channelId": "UC5Xo4FOzXrNCbzjO20vEQIQ",
+        "channelName": "🐉 FullDragonForce 🧧",
+        "subscribers": 52228912419,
+        "growth": 660115150
+      }
+    ]
   }
 ]
